@@ -25,7 +25,7 @@ export STAREXEC_CPU_LIMIT=$timeout
 export VERIT_REDUCE_PATH=/work/tungvx/reduce/bin/redcsl
 
 #sh raSAT.sh zankl 0.1 500
-cp /home/s1310007/run.py $pyfile
+cp /home/s1310007/smt_test_tools/run.py $pyfile
 
 # set permission for the executable
 chmod +x $executable
