@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #PBS -l select=2:ncpus=20
-#PBS -q MEDIUM
+#PBS -q HS-IO
 
 cd $PBS_O_WORKDIR
 
