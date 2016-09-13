@@ -7,6 +7,7 @@ cd $PBS_O_WORKDIR
 
 export PATH=$HOME/py35/bin:${PATH}
 
+toolname=test
 pyfile=$toolname".py"
 paralleljobs=40
 
