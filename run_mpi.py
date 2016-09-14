@@ -20,12 +20,14 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 						sending_data[receiving_rank].append((filename, root))
 					except:
 						sending_data[receiving_rank] = [(filename, root)]
+					file_index += 1
 
 		for receiving_rank, smt2_problems in sending_data.iteritems():
 			print "Sending", smt2_problems, "to", receiving_rank
-			comm.isend(smt2_problems, receiving_rank)
+			comm.isend(smt2_problems[0], receiving_rank)
 
 	data = comm.recv(source=0)
 	print rank, "received" ,data
 
-run("../veriT", "../test", "veriT.csv", 4, SMT2, 40000, "--disable-banner --disable-print-success")	    
+# run("../veriT", "../test", "veriT.csv", 4, SMT2, 40000, "--disable-banner --disable-print-success")	    
+run("../veriT", "/work/tungvx/QF_NRA", "veriT.csv", 4, SMT2, 40000, "--disable-banner --disable-print-success")	    
