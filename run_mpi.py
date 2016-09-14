@@ -168,13 +168,13 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 				with open(error_file_path+".err.txt", 'w+', 1) as errFile:
 					errFile.write(result[ERROR])
 
-
-	data = comm.recv(source=0)
-	for smt2Filename, root in data:
-		result = solve(tool, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RESULT, flags)
-		for key in result:
-			result[key] = str(result[key])
-		comm.isend(result, 0)
+	else:
+		data = comm.recv(source=0)
+		for smt2Filename, root in data:
+			result = solve(tool, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RESULT, flags)
+			for key in result:
+				result[key] = str(result[key])
+			comm.isend(result, 0)
 
 # run("../veriT", "../test", 30, "veriT.csv", SMT2, 40000, "--disable-banner --disable-print-success")	    
 run("./veriT", "/work/tungvx/test", 30, "veriT.csv", SMT2, 40000, "--disable-banner --disable-print-success")	    
