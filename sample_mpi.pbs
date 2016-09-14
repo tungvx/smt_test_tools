@@ -19,7 +19,7 @@ outputfile="'"$toolname".csv'"
 
 #special settings
 problemtype=SMT2
-paralleljobs=192 #number of parallel jobs
+paralleljobs=40 #number of parallel jobs
 
 export STAREXEC_CPU_LIMIT=$timeout
 export VERIT_REDUCE_PATH=/work/tungvx/reduce/bin/redcsl
