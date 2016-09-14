@@ -130,6 +130,11 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 	if rank == 0:
 		file_index = 0
 		sending_data = {}
+
+		for i in range(size):
+			if i > 0:
+				sending_data[i] = []
+
 		for root, dirnames, filenames in os.walk(directory):
 			for filename in filenames:
 				if filename.endswith(SMT2):
