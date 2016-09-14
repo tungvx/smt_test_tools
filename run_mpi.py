@@ -1,21 +1,138 @@
 from mpi4py import MPI
+import fnmatch
 import os
+import subprocess
+import csv
+import concurrent.futures
+import re
+import time
 
 SMT2=".smt2"
+BOUNDED_SMT2 = '.bound'
+
+TIME_OUT = "timeout"
+SAT = "sat"
+UNSAT = "unsat"
+UNKNOWN = "unknown"
+
+PROBLEM='Problem'
+TIME='time'
+CPU_TIME='CPU time'
+RESULT = 'result'
+ERROR = 'error'
+
+LOWER_BOUND = '(- 1000)'
+UPPER_BOUND = '1000'
+
+def gen_bounds(root, filename):
+  filePath = os.path.join(root, filename)
+  with open(filePath, 'r') as inputFile:
+    content = inputFile.read()
+    # content = content.replace('(check-sat)', '').strip()
+    # content = content.replace('(exit)', '').strip()
+
+    asserts = []
+    for m in re.finditer(r"\(declare-fun (.*) \(\) (Real|Int)\)", content):
+      asserts.append('(assert (>= {} {}))'.format (m.group(1), LOWER_BOUND))
+      asserts.append('(assert (<= {} {}))'.format (m.group(1), UPPER_BOUND))
+
+    # content += '\n' + '\n'.join(asserts)
+    # content += '\n(check-sat)\n'
+    # content += '(exit)\n'
+
+    # add assertions into the content:
+    content = content.replace('(check-sat)', '\n'.join(asserts) + '\n(check-sat)')
+
+    # print (content)
+
+    # Write content into new file:
+    with open(filePath + BOUNDED_SMT2, 'w+') as boundFile:
+      boundFile.write(content)
+
+    return filename + BOUNDED_SMT2
+
+def generate_if_not_exists(root, smt2Filename, SOLVED_PROBLEM):
+  if SMT2 == SOLVED_PROBLEM:
+    return smt2Filename
+  elif BOUNDED_SMT2 == SOLVED_PROBLEM:
+    return gen_bounds(root, smt2Filename)
+
+def remove_file(filePath):
+  try:
+    os.remove(filePath)
+  except OSError:
+    pass
+
+def solve(args):
+  (tool, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RESULT, flags) = args
+
+  filename = generate_if_not_exists(root, smt2Filename, SOLVED_PROBLEM)
+
+  result= {PROBLEM:os.path.join(root, filename)}
+
+  #try to get the result of the problem:
+  try:
+    f = open(os.path.join(root, filename))
+    m = re.search('\(set-info :status (sat|unsat|unknown)\)', f.read())
+    if m:
+      result[RESULT]=m.group(1)
+  except IOError:
+    pass
+  
+  # command = "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) + "; ./" + tool + " " +  flags + " " + os.path.join(root, filename)
+  # command = "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) \
+  #           + "; /usr/bin/time --format='time %U + %S time' ./" + tool + " " \
+  #           +  flags + " " + os.path.join(root, filename)
+
+  startTime = time.time()
+
+  command = "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) \
+            + "; bash -c \"TIMEFORMAT='time %3U + %3S time'; time timeout " + str(timeout) + " ./" + tool + " " \
+            +  flags + " " + os.path.join(root, filename) + "\""
+  
+  # print (command)
+  proc = subprocess.Popen(command,stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines = True, shell=True)
+  iOut, iErr = proc.communicate()
+
+  endTime = time.time()
+  
+  # print ("Returned code:",proc.returncode)
+
+  # print ("ER:" + iErr.strip() + ":End ER")
+  # print ("IO:" + iOut.strip() + ":End IO")
+
+  # extract running time from iErr
+  timeRegex = re.search("time (\d+\.\d+ \+ \d+\.\d+) time", iErr.strip())
+  try:
+    result[CPU_TIME] = eval(timeRegex.group(1))
+  except Exception:
+    result[CPU_TIME] = "Unparsable output"
+
+  result[TIME] = endTime - startTime
+
+  result[TOOL_RESULT] = iOut.strip()
+  result[ERROR]=iErr.strip()
+
+  # print (result[DREAL_RESULT])
+  # print (result)
+  # remove_file(result[PROBLEM])
+  return result
 
 def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000, flags=""):
 	comm = MPI.COMM_WORLD
 	rank = comm.Get_rank()
 	size = comm.Get_size()
 
-	result = {}
+	# we need the number of processes to be greater than 1
+	assert(size > 1)
+
 	if rank == 0:
 		file_index = 0
 		sending_data = {}
 		for root, dirnames, filenames in os.walk(directory):
 			for filename in filenames:
 				if filename.endswith(SMT2):
-					receiving_rank = file_index%size
+					receiving_rank = file_index%(size-1) + 1
 					try:
 						sending_data[receiving_rank].append((filename, root))
 					except:
@@ -24,10 +141,12 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 
 		for receiving_rank, smt2_problems in sending_data.iteritems():
 			# print "Sending", smt2_problems, "to", receiving_rank
-			comm.isend(smt2_problems[0], receiving_rank)
+			comm.isend(smt2_problems, receiving_rank)
 
 	data = comm.recv(source=0)
-	print rank, "received" ,data
+	for smt2Filename, root in data:
+		result = solve(tool, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RESULT, flags)
+		comm.isend(result, 0)
 
-# run("../veriT", "../test", "veriT.csv", 4, SMT2, 40000, "--disable-banner --disable-print-success")	    
-run("../veriT", "/work/tungvx/QF_NRA", "veriT.csv", 4, SMT2, 40000, "--disable-banner --disable-print-success")	    
+# run("../veriT", "../test", 30, "veriT.csv", SMT2, 40000, "--disable-banner --disable-print-success")	    
+run("./veriT", "/work/tungvx/test", 30, "veriT.csv", SMT2, 40000, "--disable-banner --disable-print-success")	    
