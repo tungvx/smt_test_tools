@@ -172,7 +172,7 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 	for smt2Filename, root in data:
 		result = solve(tool, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RESULT, flags)
 		for key in result:
-          result[key] = str(result[key])
+			result[key] = str(result[key])
 		comm.isend(result, 0)
 
 # run("../veriT", "../test", 30, "veriT.csv", SMT2, 40000, "--disable-banner --disable-print-success")	    
