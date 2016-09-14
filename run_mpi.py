@@ -65,7 +65,7 @@ def remove_file(filePath):
 
 def solve(tool, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RESULT, flags):
   filename = generate_if_not_exists(root, smt2Filename, SOLVED_PROBLEM)
-  print timeout
+  # print timeout
 
   result= {PROBLEM:os.path.join(root, filename)}
 
