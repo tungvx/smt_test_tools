@@ -126,6 +126,8 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 	# we need the number of processes to be greater than 1
 	assert(size > 1)
 
+	TOOL_RESULT = tool + " result"
+
 	if rank == 0:
 		file_index = 0
 		sending_data = {}
