@@ -14,7 +14,7 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 		sending_data = {}
 
 		for proc_rank in range(size):
-			
+			sending_data[proc_rank] = []
 
 		for root, dirnames, filenames in os.walk(directory):
 			for filename in filenames:
