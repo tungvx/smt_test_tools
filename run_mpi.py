@@ -63,8 +63,7 @@ def remove_file(filePath):
   except OSError:
     pass
 
-def solve(args):
-  (tool, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RESULT, flags) = args
+def solve(tool, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RESULT, flags):
 
   filename = generate_if_not_exists(root, smt2Filename, SOLVED_PROBLEM)
 
