@@ -10,7 +10,7 @@ export PATH=$HOME/py35/bin:${PATH}
 #settings
 timeout=2500
 memory=8000000 #kbytes
-flags="''"
+flags="'--disable-banner --disable-print-success'"
 benchmarks="'/work/tungvx/QF_NRA'"
 executable="'starexec_run_default.py'"
 toolname=CVC4
