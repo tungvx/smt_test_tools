@@ -28,7 +28,7 @@ export VERIT_REDUCE_PATH=/work/tungvx/reduce/bin/redcsl
 cp /home/s1310007/smt_test_tools/run_mpi.py $pyfile
 
 # set permission for the executable
-chmod +x $executable
+#chmod +x $executable
 
 echo "run ($executable, $benchmarks, $timeout, $outputfile, $problemtype, $memory, $flags)" >> $pyfile
 
