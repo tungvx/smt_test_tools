@@ -12,8 +12,8 @@ timeout=2500
 memory=8000000 #kbytes
 flags="''"
 benchmarks="'/work/tungvx/QF_NRA'"
-executable="'starexec_run_default.py'"
 toolname=CVC4
+executable="$toolname"
 pyfile=$toolname".py"
 outputfile="'"$toolname".csv'"
 
@@ -33,7 +33,7 @@ cp /home/s1310007/smt_test_tools/run.py $pyfile
 #cp ../1-5-8-11/1-5-8-11 raSAT
 #echo "run ('QF_NRA/meti-tarski', -10, 10, 0.1, 200, 'noDependency_noSensitivity_randomChoiceOfVar_randomChoiceOfBox.xls')" >> test.py
 #echo "run ('test', -10, 10, 0.1, 200, 'noDependency_noSensitivity_randomChoiceOfVar_randomChoiceOfBox.xls')" >> test.py
-echo "run ($executable, $benchmarks, $timeout, $outputfile, $paralleljobs, $problemtype, $memory, $flags)" >> $pyfile
+echo "run ('$executable', $benchmarks, $timeout, $outputfile, $paralleljobs, $problemtype, $memory, $flags)" >> $pyfile
 #echo "run ('veriT_reduce', '../test', 30, 'veriT_reduce.csv', 20, SMT2, 4000000, '--disable-banner --disable-print-success')" >> veriT_reduce.py
 #echo "run ('veriT', '../test', 30, 'veriT.csv', 20, SMT2, 4000000, '--disable-banner --disable-print-success')" >> veriT.py
 python $pyfile
