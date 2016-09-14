@@ -156,7 +156,7 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 			for i in range(file_index):
 				result = comm.recv(source=MPI.ANY_SOURCE)
 				# write to output file
-        		spamwriter.writerow(result)
+				spamwriter.writerow(result)
 
         		# write error to error file
 				error_file_path = log_folder_name + os.path.abspath(result[PROBLEM])+".err.txt"
