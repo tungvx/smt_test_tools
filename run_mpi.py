@@ -162,10 +162,10 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 				error_file_path = log_folder_name + os.path.abspath(result[PROBLEM])+".err.txt"
 				error_folder = os.path.dirname(error_file_path)
 				if not os.path.exists(error_folder):
-				  os.makedirs(error_folder)
+					os.makedirs(error_folder)
 
 				with open(error_file_path+".err.txt", 'w+', 1) as errFile:
-				  errFile.write(result[ERROR])
+					errFile.write(result[ERROR])
 
 
 	data = comm.recv(source=0)
