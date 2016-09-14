@@ -26,6 +26,6 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 			comm.isend(smt2_problems, receiving_rank)
 
 	data = comm.recv(source=0)
-	print data
+	print rank, "received" ,data
 
 run("../veriT", "../test", "veriT.csv", 4, SMT2, 40000, "--disable-banner --disable-print-success")	    
