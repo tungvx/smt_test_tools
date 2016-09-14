@@ -140,7 +140,7 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 						sending_data[receiving_rank] = [(filename, root)]
 					file_index += 1
 
-		for receiving_rank, smt2_problems in sending_data.iteritems():
+		for receiving_rank, smt2_problems in sending_data.items():
 			# print "Sending", smt2_problems, "to", receiving_rank
 			comm.isend(smt2_problems, receiving_rank)
 
