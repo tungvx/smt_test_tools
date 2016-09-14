@@ -12,18 +12,14 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 	if rank == 0:
 		file_index = 0
 		sending_data = {}
-
-		for proc_rank in range(size):
-			sending_data[proc_rank] = []
-
 		for root, dirnames, filenames in os.walk(directory):
 			for filename in filenames:
 				if filename.endswith(SMT2):
 					receiving_rank = file_index%size
-
-					assert(sending_data.get(receiving_rank))
-
-					sending_data[receiving_rank].append((filename, root))
+					try:
+						sending_data[receiving_rank].append((filename, root))
+					except:
+						sending_data[receiving_rank] = [(filename, root)]
 					file_index += 1
 
 		for receiving_rank, smt2_problems in sending_data.iteritems():
