@@ -1,0 +1,10 @@
+#!/bin/bash
+
+#PBS -l select=16
+#PBS -q HS-IO
+
+cd $PBS_O_WORKDIR
+
+export PATH=$HOME/py35/bin:${PATH}
+
+mpirun -np 160 python bugs.py
