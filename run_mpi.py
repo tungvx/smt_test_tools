@@ -148,7 +148,7 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 		for receiving_rank, smt2_problems in sending_data.items():
 			# print "Sending", smt2_problems, "to", receiving_rank
 			print (receiving_rank, len(smt2_problems))
-			comm.isend(smt2_problems, receiving_rank)
+			comm.send(smt2_problems, receiving_rank)
 
 		# receiving result:
 		# import datetime
