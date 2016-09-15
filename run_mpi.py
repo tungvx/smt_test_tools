@@ -147,39 +147,41 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 
 		for receiving_rank, smt2_problems in sending_data.items():
 			# print "Sending", smt2_problems, "to", receiving_rank
-			comm.isend(smt2_problems, receiving_rank)
+			import sys
+			print sys.getsizeof(smt2_problems)
+			# comm.isend(smt2_problems, receiving_rank)
 
 		# receiving result:
-		import datetime
-		import time
-		log_folder_name = "logs_" + datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H:%M:%S')
+		# import datetime
+		# import time
+		# log_folder_name = "logs_" + datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H:%M:%S')
 
-		TOOL_RESULT = tool + " result"
-		HEADERS = [PROBLEM, RESULT, CPU_TIME, TIME, TOOL_RESULT]
-		with open(resultFile, 'w+', 1) as csvfile:
-			spamwriter = csv.DictWriter(csvfile, fieldnames=HEADERS, extrasaction='ignore')
-			spamwriter.writeheader()
-			for i in range(file_index):
-				result = comm.recv(source=MPI.ANY_SOURCE)
-				# write to output file
-				spamwriter.writerow(result)
+		# TOOL_RESULT = tool + " result"
+		# HEADERS = [PROBLEM, RESULT, CPU_TIME, TIME, TOOL_RESULT]
+		# with open(resultFile, 'w+', 1) as csvfile:
+		# 	spamwriter = csv.DictWriter(csvfile, fieldnames=HEADERS, extrasaction='ignore')
+		# 	spamwriter.writeheader()
+		# 	for i in range(file_index):
+		# 		result = comm.recv(source=MPI.ANY_SOURCE)
+		# 		# write to output file
+		# 		spamwriter.writerow(result)
 
-        		# write error to error file
-				error_file_path = log_folder_name + os.path.abspath(result[PROBLEM])+".err.txt"
-				error_folder = os.path.dirname(error_file_path)
-				if not os.path.exists(error_folder):
-					os.makedirs(error_folder)
+  #       		# write error to error file
+		# 		error_file_path = log_folder_name + os.path.abspath(result[PROBLEM])+".err.txt"
+		# 		error_folder = os.path.dirname(error_file_path)
+		# 		if not os.path.exists(error_folder):
+		# 			os.makedirs(error_folder)
 
-				with open(error_file_path+".err.txt", 'w+', 1) as errFile:
-					errFile.write(result[ERROR])
+		# 		with open(error_file_path+".err.txt", 'w+', 1) as errFile:
+		# 			errFile.write(result[ERROR])
 
-	else:
-		data = comm.recv(source=0)
-		for smt2Filename, root in data:
-			result = solve(tool, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RESULT, flags)
-			for key in result:
-				result[key] = str(result[key])
-			comm.isend(result, 0)
+	# else:
+	# 	data = comm.recv(source=0)
+	# 	for smt2Filename, root in data:
+	# 		result = solve(tool, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RESULT, flags)
+	# 		for key in result:
+	# 			result[key] = str(result[key])
+	# 		comm.isend(result, 0)
 
 # run("../veriT", "../test", 30, "veriT.csv", SMT2, 40000, "--disable-banner --disable-print-success")	    
 # run("./veriT", "/work/tungvx/test", 30, "veriT.csv", SMT2, 40000, "--disable-banner --disable-print-success")	    
