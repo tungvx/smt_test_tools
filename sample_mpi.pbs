@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#PBS -l select=2
+#PBS -l select=16
 #PBS -q HS-IO
 
 cd $PBS_O_WORKDIR
@@ -19,7 +19,7 @@ outputfile="'"$toolname".csv'"
 
 #special settings
 problemtype=SMT2
-paralleljobs=20 #number of parallel jobs
+paralleljobs=160 #number of parallel jobs
 
 export STAREXEC_CPU_LIMIT=$timeout
 export VERIT_REDUCE_PATH=/work/tungvx/reduce/bin/redcsl
