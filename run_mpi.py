@@ -147,8 +147,10 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 
 		for receiving_rank, smt2_problems in sending_data.items():
 			# print "Sending", smt2_problems, "to", receiving_rank
-			print (receiving_rank, len(smt2_problems))
-			comm.isend(smt2_problems, receiving_rank)
+			comm.send(len(smt2_problems), receiving_rank)
+			# print (receiving_rank, len(smt2_problems))
+			for smt2_problem in smt2_problems:
+				comm.isend(smt2_problem, receiving_rank)
 
 		# receiving result:
 		# import datetime
@@ -175,8 +177,12 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 		# 			errFile.write(result[ERROR])
 
 	else:
-		data = comm.recv(source=0)
-		print ("Rank", rank, "receiving", len(data), "problems")
+		num_of_smt2_problems = comm.recv(source=0)
+		smt2_problems = []
+		for index in range(num_of_smt2_problems):
+			smt2_problems.append(comm.recv(source=0))
+
+		print ("Rank", rank, "receiving", len(smt2_problems), "problems")
 		# for smt2Filename, root in data:
 		# 	result = solve(tool, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RESULT, flags)
 		# 	for key in result:
