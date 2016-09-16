@@ -161,7 +161,7 @@ def run(tool, directory, timeout, resultFile, PROCESSES_NUM, SOLVED_PROBLEM, max
         if not os.path.exists(error_folder):
           os.makedirs(error_folder)
 
-        with open(error_file_path+".err.txt", 'w+', 1) as errFile:
+        with open(error_file_path, 'w+', 1) as errFile:
           errFile.write(result[ERROR])
 
 
