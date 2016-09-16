@@ -175,7 +175,7 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 			for i in range(size-1):
 				proc_rank = comm.recv(source=MPI.ANY_SOURCE)
 				# write to output file
-				with open(os.path.join(log_folder_name, str(rank)+".csv"), "r") as proc_rank_output:
+				with open(os.path.join(log_folder_name, str(proc_rank)+".csv"), "r") as proc_rank_output:
 					csvfile.write(proc_rank_output.read())
 
 	else:
