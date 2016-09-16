@@ -37,7 +37,7 @@ def run_raSAT (filename, bounds, sbox, timeout):
   subprocess.call([os.path.join(current_path, "./raSAT-0.2"), filename, bounds, 'sbox=' + str(sbox), 'tout=' + str(timeout-(time.time() - startTime))])
   
   try:
-    with open(filename + '.0.2.tmp', 'rb') as outfile:
+    with open(filename + '.0.2.tmp', 'r') as outfile:
       raSATResult = outfile.read().rstrip()
       outfile.close()
       if raSATResult == "unknown":
@@ -62,7 +62,7 @@ def run(filename, initLowerBound, initUpperBound, sbox, timeout):
     
     if raSATResult == 'unsat':
       (raSATResult, sbox) = run_raSAT(filename, 'lb=-inf inf', sbox, timeout - (time.time() - startTime))  
-  print raSATResult
+  print (raSATResult)
 
   # remove tmps files:
   remove_tmp(filename, "0.2")
