@@ -128,6 +128,15 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 	TOOL_RESULT = tool + " result"
 
 	if rank == 0:
+
+		# create log folder name and send to all other ranks
+		import datetime
+		import time
+		log_folder_name = "logs_" + datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H:%M:%S')
+		for index in range(rank-1):
+			receiving_rank = index + 1
+			comm.send(log_folder_name, receiving_rank)
+
 		file_index = 0
 		sending_data = {}
 
@@ -163,6 +172,9 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 				spamwriter.writerow(result)
 
 	else:
+		# first, receiving log folder name:
+		log_folder_name = comm.recv(source=0)
+
 		data = comm.recv(source=0)
 		# print ("Rank", rank, "receiving", len(data), "problems")
 		for smt2Filename, root in data:
@@ -171,13 +183,19 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 				result[key] = str(result[key])
 
 			# write error to error file
-			error_file_path = "logs" + os.path.abspath(result[PROBLEM])+".err.txt"
+			error_file_path = log_folder_name + os.path.abspath(result[PROBLEM])+".err.txt"
 			error_folder = os.path.dirname(error_file_path)
-			if not os.path.exists(error_folder):
+			try:
 				os.makedirs(error_folder)
+			except FileExistsError:
+				pass
 
-			with open(error_file_path, 'w+', 1) as errFile:
-				errFile.write(result[ERROR])
+			try:
+				with open(error_file_path, 'w+', 1) as errFile:
+					errFile.write(result[ERROR])
+			except Exception as e:
+				print (e)
+				pass
 
 			# removing error
 			result.pop(ERROR, "")
