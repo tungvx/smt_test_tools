@@ -25,97 +25,97 @@ LOWER_BOUND = '(- 1000)'
 UPPER_BOUND = '1000'
 
 def gen_bounds(root, filename):
-  filePath = os.path.join(root, filename)
-  with open(filePath, 'r') as inputFile:
-    content = inputFile.read()
-    # content = content.replace('(check-sat)', '').strip()
-    # content = content.replace('(exit)', '').strip()
+	filePath = os.path.join(root, filename)
+	with open(filePath, 'r') as inputFile:
+		content = inputFile.read()
+		# content = content.replace('(check-sat)', '').strip()
+		# content = content.replace('(exit)', '').strip()
 
-    asserts = []
-    for m in re.finditer(r"\(declare-fun (.*) \(\) (Real|Int)\)", content):
-      asserts.append('(assert (>= {} {}))'.format (m.group(1), LOWER_BOUND))
-      asserts.append('(assert (<= {} {}))'.format (m.group(1), UPPER_BOUND))
+		asserts = []
+		for m in re.finditer(r"\(declare-fun (.*) \(\) (Real|Int)\)", content):
+			asserts.append('(assert (>= {} {}))'.format (m.group(1), LOWER_BOUND))
+			asserts.append('(assert (<= {} {}))'.format (m.group(1), UPPER_BOUND))
 
-    # content += '\n' + '\n'.join(asserts)
-    # content += '\n(check-sat)\n'
-    # content += '(exit)\n'
+		# content += '\n' + '\n'.join(asserts)
+		# content += '\n(check-sat)\n'
+		# content += '(exit)\n'
 
-    # add assertions into the content:
-    content = content.replace('(check-sat)', '\n'.join(asserts) + '\n(check-sat)')
+		# add assertions into the content:
+		content = content.replace('(check-sat)', '\n'.join(asserts) + '\n(check-sat)')
 
-    # print (content)
+		# print (content)
 
-    # Write content into new file:
-    with open(filePath + BOUNDED_SMT2, 'w+') as boundFile:
-      boundFile.write(content)
+		# Write content into new file:
+		with open(filePath + BOUNDED_SMT2, 'w+') as boundFile:
+			boundFile.write(content)
 
-    return filename + BOUNDED_SMT2
+		return filename + BOUNDED_SMT2
 
 def generate_if_not_exists(root, smt2Filename, SOLVED_PROBLEM):
-  if SMT2 == SOLVED_PROBLEM:
-    return smt2Filename
-  elif BOUNDED_SMT2 == SOLVED_PROBLEM:
-    return gen_bounds(root, smt2Filename)
+	if SMT2 == SOLVED_PROBLEM:
+		return smt2Filename
+	elif BOUNDED_SMT2 == SOLVED_PROBLEM:
+		return gen_bounds(root, smt2Filename)
 
 def remove_file(filePath):
-  try:
-    os.remove(filePath)
-  except OSError:
-    pass
+	try:
+		os.remove(filePath)
+	except OSError:
+		pass
 
 def solve(tool, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RESULT, flags):
-  filename = generate_if_not_exists(root, smt2Filename, SOLVED_PROBLEM)
-  # print timeout
+	filename = generate_if_not_exists(root, smt2Filename, SOLVED_PROBLEM)
+	# print timeout
 
-  result= {PROBLEM:os.path.join(root, filename)}
+	result= {PROBLEM:os.path.join(root, filename)}
 
-  #try to get the result of the problem:
-  try:
-    f = open(os.path.join(root, filename))
-    m = re.search('\(set-info :status (sat|unsat|unknown)\)', f.read())
-    if m:
-      result[RESULT]=m.group(1)
-  except IOError:
-    pass
-  
-  # command = "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) + "; ./" + tool + " " +  flags + " " + os.path.join(root, filename)
-  # command = "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) \
-  #           + "; /usr/bin/time --format='time %U + %S time' ./" + tool + " " \
-  #           +  flags + " " + os.path.join(root, filename)
+	#try to get the result of the problem:
+	try:
+		f = open(os.path.join(root, filename))
+		m = re.search('\(set-info :status (sat|unsat|unknown)\)', f.read())
+		if m:
+			result[RESULT]=m.group(1)
+	except IOError:
+		pass
+	
+	# command = "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) + "; ./" + tool + " " +  flags + " " + os.path.join(root, filename)
+	# command = "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) \
+	#           + "; /usr/bin/time --format='time %U + %S time' ./" + tool + " " \
+	#           +  flags + " " + os.path.join(root, filename)
 
-  startTime = time.time()
+	startTime = time.time()
 
-  command = "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) \
-            + "; bash -c \"TIMEFORMAT='time %3U + %3S time'; time timeout " + str(timeout) + " ./" + tool + " " \
-            +  flags + " " + os.path.join(root, filename) + "\""
-  
-  # print (command)
-  proc = subprocess.Popen(command,stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines = True, shell=True)
-  iOut, iErr = proc.communicate()
+	command = "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) \
+						+ "; bash -c \"TIMEFORMAT='time %3U + %3S time'; time timeout " + str(timeout) + " ./" + tool + " " \
+						+  flags + " " + os.path.join(root, filename) + "\""
+	
+	# print (command)
+	proc = subprocess.Popen(command,stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines = True, shell=True)
+	iOut, iErr = proc.communicate()
 
-  endTime = time.time()
-  
-  # print ("Returned code:",proc.returncode)
+	endTime = time.time()
+	
+	# print ("Returned code:",proc.returncode)
 
-  # print ("ER:" + iErr.strip() + ":End ER")
-  # print ("IO:" + iOut.strip() + ":End IO")
+	# print ("ER:" + iErr.strip() + ":End ER")
+	# print ("IO:" + iOut.strip() + ":End IO")
 
-  # extract running time from iErr
-  timeRegex = re.search("time (\d+\.\d+ \+ \d+\.\d+) time", iErr.strip())
-  try:
-    result[CPU_TIME] = eval(timeRegex.group(1))
-  except Exception:
-    result[CPU_TIME] = "Unparsable output"
+	# extract running time from iErr
+	timeRegex = re.search("time (\d+\.\d+ \+ \d+\.\d+) time", iErr.strip())
+	try:
+		result[CPU_TIME] = eval(timeRegex.group(1))
+	except Exception:
+		result[CPU_TIME] = "Unparsable output"
 
-  result[TIME] = endTime - startTime
+	result[TIME] = endTime - startTime
 
-  result[TOOL_RESULT] = iOut.strip()
-  result[ERROR]=iErr.strip()
+	result[TOOL_RESULT] = iOut.strip()
+	result[ERROR]=iErr.strip()
 
-  # print (result[DREAL_RESULT])
-  # print (result)
-  # remove_file(result[PROBLEM])
-  return result
+	# print (result[DREAL_RESULT])
+	# print (result)
+	# remove_file(result[PROBLEM])
+	return result
 
 def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000, flags=""):
 	comm = MPI.COMM_WORLD
@@ -170,18 +170,18 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 			for key in result:
 				result[key] = str(result[key])
 
-      # write error to error file
-      error_file_path = "logs" + os.path.abspath(result[PROBLEM])+".err.txt"
-      error_folder = os.path.dirname(error_file_path)
-      if not os.path.exists(error_folder):
-        os.makedirs(error_folder)
+			# write error to error file
+			error_file_path = "logs" + os.path.abspath(result[PROBLEM])+".err.txt"
+			error_folder = os.path.dirname(error_file_path)
+			if not os.path.exists(error_folder):
+				os.makedirs(error_folder)
 
-      with open(error_file_path, 'w+', 1) as errFile:
-        errFile.write(result[ERROR])
+			with open(error_file_path, 'w+', 1) as errFile:
+				errFile.write(result[ERROR])
 
-      # removing error
-      result.pop(ERROR, "")
-      # sending result to root process
+			# removing error
+			result.pop(ERROR, "")
+			# sending result to root process
 			comm.send(result, 0)
 
 # run("../veriT", "../test", 30, "veriT.csv", SMT2, 40000, "--disable-banner --disable-print-success")	    
