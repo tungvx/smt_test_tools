@@ -166,10 +166,11 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 		with open(resultFile, 'w+', 1) as csvfile:
 			spamwriter = csv.DictWriter(csvfile, fieldnames=HEADERS, extrasaction='ignore')
 			spamwriter.writeheader()
-			for i in range(file_index):
-				result = comm.recv(source=MPI.ANY_SOURCE)
+			for i in range(size-1):
+				results = comm.recv(source=MPI.ANY_SOURCE)
 				# write to output file
-				spamwriter.writerow(result)
+				for result in results:
+					spamwriter.writerow(result)
 
 	else:
 		# first, receiving log folder name:
@@ -177,6 +178,7 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 
 		data = comm.recv(source=0)
 		# print ("Rank", rank, "receiving", len(data), "problems")
+		results = []
 		for smt2Filename, root in data:
 			result = solve(tool, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RESULT, flags)
 			for key in result:
@@ -199,8 +201,10 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 
 			# removing error
 			result.pop(ERROR, "")
-			# sending result to root process
-			comm.send(result, 0)
+			results.append(result)
+
+		# sending result to root process
+		comm.send(results, 0)
 
 # run("../veriT", "../test", 30, "veriT.csv", SMT2, 40000, "--disable-banner --disable-print-success")	    
 # run("./veriT", "/work/tungvx/test", 30, "veriT.csv", SMT2, 40000, "--disable-banner --disable-print-success")	    
