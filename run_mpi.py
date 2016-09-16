@@ -151,9 +151,6 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 			comm.send(smt2_problems, receiving_rank)
 
 		# receiving result:
-		import datetime
-		import time
-		log_folder_name = "logs_" + datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H:%M:%S')
 
 		TOOL_RESULT = tool + " result"
 		HEADERS = [PROBLEM, RESULT, CPU_TIME, TIME, TOOL_RESULT]
@@ -165,15 +162,6 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 				# write to output file
 				spamwriter.writerow(result)
 
-        		# write error to error file
-				error_file_path = log_folder_name + os.path.abspath(result[PROBLEM])+".err.txt"
-				error_folder = os.path.dirname(error_file_path)
-				if not os.path.exists(error_folder):
-					os.makedirs(error_folder)
-
-				with open(error_file_path, 'w+', 1) as errFile:
-					errFile.write(result[ERROR])
-
 	else:
 		data = comm.recv(source=0)
 		# print ("Rank", rank, "receiving", len(data), "problems")
@@ -181,6 +169,19 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 			result = solve(tool, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RESULT, flags)
 			for key in result:
 				result[key] = str(result[key])
+
+      # write error to error file
+      error_file_path = "logs" + os.path.abspath(result[PROBLEM])+".err.txt"
+      error_folder = os.path.dirname(error_file_path)
+      if not os.path.exists(error_folder):
+        os.makedirs(error_folder)
+
+      with open(error_file_path, 'w+', 1) as errFile:
+        errFile.write(result[ERROR])
+
+      # removing error
+      result.pop(ERROR, "")
+      # sending result to root process
 			comm.send(result, 0)
 
 # run("../veriT", "../test", 30, "veriT.csv", SMT2, 40000, "--disable-banner --disable-print-success")	    
