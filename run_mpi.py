@@ -134,6 +134,13 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 		import datetime
 		import time
 		log_folder_name = "logs_" + datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H:%M:%S')
+		
+		# create the folder
+		try:
+			os.makedirs(log_folder_name)
+		except FileExistsError:
+			pass
+
 		for index in range(size-1):
 			receiving_rank = index + 1
 			comm.send(log_folder_name, receiving_rank)
