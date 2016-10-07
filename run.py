@@ -17,7 +17,7 @@ UNKNOWN = "unknown"
 PROBLEM='Problem'
 TIME='time'
 CPU_TIME='CPU time'
-RESULT = 'result'
+RESULT = 'status'
 ERROR = 'error'
 
 LOWER_BOUND = '(- 1000)'
