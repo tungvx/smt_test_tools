@@ -89,9 +89,8 @@ def solve(args):
             + "; bash -c \"TIMEFORMAT='time %3U + %3S time'; time timeout " + str(timeout) + " ./" + tool + " " \
             +  flags + " " + os.path.join(root, filename) + "\""
   
-  # print (command)
-  # print ("\n")
-  
+  # print (command + "\n")
+
   proc = subprocess.Popen(command,stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines = True, shell=True)
   iOut, iErr = proc.communicate()
 
@@ -170,5 +169,7 @@ def run(tool, directory, timeout, resultFile, PROCESSES_NUM, SOLVED_PROBLEM, max
 # run("../veriT", "../test", 30, "veriT.csv", 4, SMT2, 40000, "--disable-banner --disable-print-success")
 # run("z3", "Test/test", 30, "z3.csv", 4, SMT2, 1000000)
 # run("veriT_reduce", "test", 20, "veriT_reduce.csv", 4, SMT2, 400000, "--disable-banner --disable-print-success")
-# run("veriT", "/home/tungvx/raSAT/development_ver/raSAT/Test/smtlib-20140121/QF_NRA/meti-tarski/sin/cos", 30, "veriT.csv", 1, SMT2, 400000, "--disable-banner --disable-print-success")
+# run("veriT", 
+#   "/home/tungvx/raSAT/development_ver/raSAT/Test/smtlib-20140121/QF_NRA/", 
+#   30, "veriT.csv", 1, SMT2, 400000, "--disable-banner --disable-print-success")
 # run("veriT_raSAT", "test", 30, "veriT_raSAT.csv", 4, SMT2, 400000, "--disable-banner --disable-print-success")
