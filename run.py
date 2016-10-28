@@ -171,5 +171,5 @@ def run(tool, directory, timeout, resultFile, PROCESSES_NUM, SOLVED_PROBLEM, max
 # run("veriT_reduce", "test", 20, "veriT_reduce.csv", 4, SMT2, 400000, "--disable-banner --disable-print-success")
 # run("veriT", 
 #   "/home/tungvx/raSAT/development_ver/raSAT/Test/smtlib-20140121/QF_NRA/", 
-#   30, "veriT.csv", 1, SMT2, 400000, "--disable-banner --disable-print-success")
+#   30, "veriT.csv", 4, SMT2, 400000, "--disable-banner --disable-print-success")
 # run("veriT_raSAT", "test", 30, "veriT_raSAT.csv", 4, SMT2, 400000, "--disable-banner --disable-print-success")
