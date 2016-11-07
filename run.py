@@ -23,6 +23,8 @@ ERROR = 'error'
 LOWER_BOUND = '(- 1000)'
 UPPER_BOUND = '1000'
 
+log_error = False
+
 def gen_bounds(root, filename):
   filePath = os.path.join(root, filename)
   with open(filePath, 'r') as inputFile:
@@ -111,7 +113,9 @@ def solve(args):
   result[TIME] = endTime - startTime
 
   result[TOOL_RESULT] = iOut.strip()
-  result[ERROR]=iErr.strip()
+  
+  if log_error:
+    result[ERROR]=iErr.strip()
 
   # print (result[DREAL_RESULT])
   # print (result)
@@ -123,7 +127,9 @@ def run(tool, directory, timeout, resultFile, PROCESSES_NUM, SOLVED_PROBLEM, max
   # generating name of the logs folder
   import datetime
   import time
-  log_folder_name = "logs_" + datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H:%M:%S')
+
+  if log_error:
+    log_folder_name = "logs_" + datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H:%M:%S')
 
   TOOL_RESULT = tool + " result"
   HEADERS = [PROBLEM, RESULT, CPU_TIME, TIME, TOOL_RESULT]
@@ -157,13 +163,14 @@ def run(tool, directory, timeout, resultFile, PROCESSES_NUM, SOLVED_PROBLEM, max
         spamwriter.writerow(result)
 
         # write error to error file
-        error_file_path = log_folder_name + os.path.abspath(result[PROBLEM])+".err.txt"
-        error_folder = os.path.dirname(error_file_path)
-        if not os.path.exists(error_folder):
-          os.makedirs(error_folder)
+        if log_error:
+          error_file_path = log_folder_name + os.path.abspath(result[PROBLEM])+".err.txt"
+          error_folder = os.path.dirname(error_file_path)
+          if not os.path.exists(error_folder):
+            os.makedirs(error_folder)
 
-        with open(error_file_path, 'w+', 1) as errFile:
-          errFile.write(result[ERROR])
+          with open(error_file_path, 'w+', 1) as errFile:
+            errFile.write(result[ERROR])
 
 
 # run("../veriT", "../test", 30, "veriT.csv", 4, SMT2, 40000, "--disable-banner --disable-print-success")
