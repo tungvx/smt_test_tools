@@ -25,6 +25,14 @@ UPPER_BOUND = '1000'
 
 log_error = False
 
+import argparse
+parser=argparse.ArgumentParser(description="""Argument Parser""")
+parser.add_argument('-unsound_finding', action='store_true', default=False)
+unsound_finding = parser.parse_args().unsound_finding
+
+# print (unsound_finding)
+# exit()
+
 def gen_bounds(root, filename):
   filePath = os.path.join(root, filename)
   with open(filePath, 'r') as inputFile:
@@ -68,18 +76,25 @@ def solve(args):
   (tool, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RESULT, flags) = args
 
   filename = generate_if_not_exists(root, smt2Filename, SOLVED_PROBLEM)
+  filePath = os.path.join(root, filename)
 
-  result= {PROBLEM:os.path.join(root, filename)}
+  result= {PROBLEM:filePath}
+
+  if unsound_finding:
+    print ('Testing', filePath)
 
   #try to get the result of the problem:
   try:
-    f = open(os.path.join(root, filename))
+    f = open(filePath)
     m = re.search('\(set-info :status (sat|unsat|unknown)\)', f.read())
     if m:
       result[RESULT]=m.group(1)
   except IOError:
     pass
   
+  # scramble the benchmark
+  # ./process filePath seed
+
   # command = "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) + "; ./" + tool + " " +  flags + " " + os.path.join(root, filename)
   # command = "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) \
   #           + "; /usr/bin/time --format='time %U + %S time' ./" + tool + " " \
@@ -161,6 +176,7 @@ def run(tool, directory, timeout, resultFile, PROCESSES_NUM, SOLVED_PROBLEM, max
         
         # write to output file
         spamwriter.writerow(result)
+        csvfile.flush()
 
         # write error to error file
         if log_error:
@@ -176,7 +192,8 @@ def run(tool, directory, timeout, resultFile, PROCESSES_NUM, SOLVED_PROBLEM, max
 # run("../veriT", "../test", 30, "veriT.csv", 4, SMT2, 40000, "--disable-banner --disable-print-success")
 # run("z3", "Test/test", 30, "z3.csv", 4, SMT2, 1000000)
 # run("veriT_reduce", "test", 20, "veriT_reduce.csv", 4, SMT2, 400000, "--disable-banner --disable-print-success")
-# run("veriT", 
-#   "/home/tungvx/raSAT/development_ver/raSAT/Test/smtlib-20140121/QF_NRA/", 
-#   30, "veriT.csv", 4, SMT2, 400000, "--disable-banner --disable-print-success")
+if unsound_finding:
+  run("veriT", 
+    "/home/tungvx/raSAT/development_ver/raSAT/Test/smtlib-20140121/QF_NRA/", 
+    30, "veriT.csv", 1, SMT2, 400000, "--disable-banner --disable-print-success")
 # run("veriT_raSAT", "test", 30, "veriT_raSAT.csv", 4, SMT2, 400000, "--disable-banner --disable-print-success")
