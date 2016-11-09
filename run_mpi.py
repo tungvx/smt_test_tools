@@ -24,6 +24,12 @@ ERROR = 'error'
 LOWER_BOUND = '(- 1000)'
 UPPER_BOUND = '1000'
 
+import argparse
+parser=argparse.ArgumentParser(description="""Argument Parser""")
+parser.add_argument('-log_error', action='store_true', default=False)
+log_error = parser.parse_args().log_error
+
+
 def gen_bounds(root, filename):
 	filePath = os.path.join(root, filename)
 	with open(filePath, 'r') as inputFile:
@@ -110,7 +116,9 @@ def solve(tool, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RE
 	result[TIME] = endTime - startTime
 
 	result[TOOL_RESULT] = iOut.strip()
-	result[ERROR]=iErr.strip()
+	
+	if log_error:
+		result[ERROR]=iErr.strip()
 
 	# print (result[DREAL_RESULT])
 	# print (result)
@@ -194,19 +202,20 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 					result[key] = str(result[key])
 
 				# write error to error file
-				error_file_path = log_folder_name + os.path.abspath(result[PROBLEM])+".err.txt"
-				error_folder = os.path.dirname(error_file_path)
-				try:
-					os.makedirs(error_folder)
-				except FileExistsError:
-					pass
+				if log_error:
+					error_file_path = log_folder_name + os.path.abspath(result[PROBLEM])+".err.txt"
+					error_folder = os.path.dirname(error_file_path)
+					try:
+						os.makedirs(error_folder)
+					except FileExistsError:
+						pass
 
-				try:
-					with open(error_file_path, 'w+', 1) as errFile:
-						errFile.write(result[ERROR])
-				except Exception as e:
-					print (e)
-					pass
+					try:
+						with open(error_file_path, 'w+', 1) as errFile:
+							errFile.write(result[ERROR])
+					except Exception as e:
+						print (e)
+						pass
 
 				spamwriter.writerow(result)
 

@@ -23,12 +23,12 @@ ERROR = 'error'
 LOWER_BOUND = '(- 1000)'
 UPPER_BOUND = '1000'
 
-log_error = False
-
 import argparse
 parser=argparse.ArgumentParser(description="""Argument Parser""")
 parser.add_argument('-unsound_finding', action='store_true', default=False)
+parser.add_argument('-log_error', action='store_true', default=False)
 unsound_finding = parser.parse_args().unsound_finding
+log_error = parser.parse_args().log_error
 
 # print (unsound_finding)
 # exit()
@@ -195,5 +195,5 @@ def run(tool, directory, timeout, resultFile, PROCESSES_NUM, SOLVED_PROBLEM, max
 if unsound_finding:
   run("veriT", 
     "/home/tungvx/raSAT/development_ver/raSAT/Test/smtlib-20140121/QF_NRA/", 
-    30, "veriT.csv", 1, SMT2, 400000, "--disable-banner --disable-print-success")
+    20, "veriT.csv", 1, SMT2, 400000, "--disable-banner --disable-print-success")
 # run("veriT_raSAT", "test", 30, "veriT_raSAT.csv", 4, SMT2, 400000, "--disable-banner --disable-print-success")
