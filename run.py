@@ -104,7 +104,7 @@ def solve(args):
 
   command = "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) \
             + "; bash -c \"TIMEFORMAT='time %3U + %3S time'; time timeout " + str(timeout) + " ./" + tool + " " \
-            +  flags + " " + os.path.join(root, filename) + "\""
+            +  flags + " " + filePath + "\""
   
   # print (command + "\n")
 
