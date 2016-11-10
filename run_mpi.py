@@ -6,6 +6,8 @@ import csv
 import concurrent.futures
 import re
 import time
+from subprocess import TimeoutExpired
+import signal
 
 SMT2=".smt2"
 BOUNDED_SMT2 = '.bound'
@@ -96,29 +98,42 @@ def solve(tool, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RE
 						+  flags + " " + os.path.join(root, filename) + "\""
 	
 	# print (command)
-	proc = subprocess.Popen(command,stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines = True, shell=True)
-	iOut, iErr = proc.communicate()
+	proc = subprocess.Popen(command,stdout=subprocess.PIPE, 
+                          stderr=subprocess.PIPE, universal_newlines = True, 
+                          shell=True, preexec_fn=os.setsid)
+  
+  try:    
+    iOut, iErr = proc.communicate(timeout=timeout)
+  except TimeoutExpired:
+    os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
 
-	endTime = time.time()
-	
-	# print ("Returned code:",proc.returncode)
 
-	# print ("ER:" + iErr.strip() + ":End ER")
-	# print ("IO:" + iOut.strip() + ":End IO")
+  endTime = time.time()
+  
+  # print ("Returned code:",proc.returncode)
 
-	# extract running time from iErr
-	timeRegex = re.search("time (\d+\.\d+ \+ \d+\.\d+) time", iErr.strip())
-	try:
-		result[CPU_TIME] = eval(timeRegex.group(1))
-	except Exception:
-		result[CPU_TIME] = "Unparsable output"
+  # print ("ER:" + iErr.strip() + ":End ER")
+  # print ("IO:" + iOut.strip() + ":End IO")
 
-	result[TIME] = endTime - startTime
+  # extract running time from iErr
+  try:
+    timeRegex = re.search("time (\d+\.\d+ \+ \d+\.\d+) time", iErr.strip())
+    result[CPU_TIME] = eval(timeRegex.group(1))
+  except Exception:
+    result[CPU_TIME] = "Unparsable output"
 
-	result[TOOL_RESULT] = iOut.strip()
-	
-	if log_error:
-		result[ERROR]=iErr.strip()
+  result[TIME] = endTime - startTime
+
+  try:
+    result[TOOL_RESULT] = iOut.strip()
+  except Exception:
+    result[TOOL_RESULT] = ""
+  
+  if log_error:
+    try:
+      result[ERROR]=iErr.strip()
+    except Exception:
+      result[ERROR]=""
 
 	# print (result[DREAL_RESULT])
 	# print (result)

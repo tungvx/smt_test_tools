@@ -1,10 +1,12 @@
 import fnmatch
 import os
 import subprocess
+from subprocess import TimeoutExpired
 import csv
 import concurrent.futures
 import re
 import time
+import signal
 
 SMT2=".smt2"
 BOUNDED_SMT2 = '.bound'
