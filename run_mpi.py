@@ -98,42 +98,48 @@ def solve(tool, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RE
 						+  flags + " " + os.path.join(root, filename) + "\""
 	
 	# print (command)
-	proc = subprocess.Popen(command,stdout=subprocess.PIPE, 
-                          stderr=subprocess.PIPE, universal_newlines = True, 
-                          shell=True, preexec_fn=os.setsid)
-  
-  try:    
-    iOut, iErr = proc.communicate(timeout=timeout)
-  except TimeoutExpired:
-    os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+	try:
+		proc = subprocess.Popen(command,stdout=subprocess.PIPE, 
+													stderr=subprocess.PIPE, universal_newlines = True, 
+													shell=True, preexec_fn=os.setsid)
+	except Exception:
+		pass    
+	
+	try:    
+		iOut, iErr = proc.communicate(timeout=timeout)
+	except TimeoutExpired:
+		try:
+			os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+		except Exception:
+			pass
 
 
-  endTime = time.time()
-  
-  # print ("Returned code:",proc.returncode)
+	endTime = time.time()
+	
+	# print ("Returned code:",proc.returncode)
 
-  # print ("ER:" + iErr.strip() + ":End ER")
-  # print ("IO:" + iOut.strip() + ":End IO")
+	# print ("ER:" + iErr.strip() + ":End ER")
+	# print ("IO:" + iOut.strip() + ":End IO")
 
-  # extract running time from iErr
-  try:
-    timeRegex = re.search("time (\d+\.\d+ \+ \d+\.\d+) time", iErr.strip())
-    result[CPU_TIME] = eval(timeRegex.group(1))
-  except Exception:
-    result[CPU_TIME] = "Unparsable output"
+	# extract running time from iErr
+	try:
+		timeRegex = re.search("time (\d+\.\d+ \+ \d+\.\d+) time", iErr.strip())
+		result[CPU_TIME] = eval(timeRegex.group(1))
+	except Exception:
+		result[CPU_TIME] = "Unparsable output"
 
-  result[TIME] = endTime - startTime
+	result[TIME] = endTime - startTime
 
-  try:
-    result[TOOL_RESULT] = iOut.strip()
-  except Exception:
-    result[TOOL_RESULT] = ""
-  
-  if log_error:
-    try:
-      result[ERROR]=iErr.strip()
-    except Exception:
-      result[ERROR]=""
+	try:
+		result[TOOL_RESULT] = iOut.strip()
+	except Exception:
+		result[TOOL_RESULT] = ""
+	
+	if log_error:
+		try:
+			result[ERROR]=iErr.strip()
+		except Exception:
+			result[ERROR]=""
 
 	# print (result[DREAL_RESULT])
 	# print (result)
