@@ -103,13 +103,20 @@ def solve(args):
   startTime = time.time()
 
   command = "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) \
-            + "; bash -c \"TIMEFORMAT='time %3U + %3S time'; time timeout " + str(timeout) + " ./" + tool + " " \
-            +  flags + " " + filePath + "\""
-  
-  # print (command + "\n")
+              + "; bash -c \"TIMEFORMAT='time %3U + %3S time'; time timeout " + str(timeout) + " ./" + tool + " " \
+              +  flags + " " + filePath + "\""
+    
+    # print (command + "\n")
 
-  proc = subprocess.Popen(command,stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines = True, shell=True)
-  iOut, iErr = proc.communicate()
+  proc = subprocess.Popen(command,stdout=subprocess.PIPE, 
+                          stderr=subprocess.PIPE, universal_newlines = True, 
+                          shell=True, preexec_fn=os.setsid)
+  
+  try:    
+    iOut, iErr = proc.communicate(timeout=timeout)
+  except TimeoutExpired:
+    os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+
 
   endTime = time.time()
   
@@ -119,18 +126,24 @@ def solve(args):
   # print ("IO:" + iOut.strip() + ":End IO")
 
   # extract running time from iErr
-  timeRegex = re.search("time (\d+\.\d+ \+ \d+\.\d+) time", iErr.strip())
   try:
+    timeRegex = re.search("time (\d+\.\d+ \+ \d+\.\d+) time", iErr.strip())
     result[CPU_TIME] = eval(timeRegex.group(1))
   except Exception:
     result[CPU_TIME] = "Unparsable output"
 
   result[TIME] = endTime - startTime
 
-  result[TOOL_RESULT] = iOut.strip()
+  try:
+    result[TOOL_RESULT] = iOut.strip()
+  except Exception:
+    result[TOOL_RESULT] = ""
   
   if log_error:
-    result[ERROR]=iErr.strip()
+    try:
+      result[ERROR]=iErr.strip()
+    except Exception:
+      result[ERROR]=""
 
   # print (result[DREAL_RESULT])
   # print (result)
@@ -171,6 +184,7 @@ def run(tool, directory, timeout, resultFile, PROCESSES_NUM, SOLVED_PROBLEM, max
         except Exception as e:
           print (e)
           continue
+          
         for key in result:
           result[key] = str(result[key])
         
