@@ -110,7 +110,6 @@ def solve(tool, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RE
 	except TimeoutExpired:
 		try:
 			os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
-			iOut, iErr = proc.communicate()
 		except Exception:
 			pass
 
