@@ -104,8 +104,10 @@ def solve(args):
 
 	startTime = time.time()
 
+	wall_timeout = timeout
+
 	command = "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) \
-							+ "; bash -c \"TIMEFORMAT='time %3U + %3S time'; time timeout " + str(timeout) + " ./" + tool + " " \
+							+ "; bash -c \"TIMEFORMAT='time %3U time'; time timeout " + str(wall_timeout) + " ./" + tool + " " \
 							+  flags + " " + filePath + "\""
 		
 		# print (command + "\n")
@@ -118,7 +120,7 @@ def solve(args):
 		pass    
 	
 	try:    
-		iOut, iErr = proc.communicate(timeout=timeout)
+		iOut, iErr = proc.communicate(timeout=wall_timeout)
 	except TimeoutExpired:
 		try:
 			os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
@@ -147,6 +149,12 @@ def solve(args):
 	except Exception:
 		result[TOOL_RESULT] = ""
 	
+
+	if unsound_finding:
+		if result[RESULT] in ["sat", "unsat"] and result[TOOL_RESULT] in ["sat", "unsat"] and result[RESULT] != result[TOOL_RESULT]:
+		    print ("Unsound problem at:", os.path.join(root, filename))
+		    sys.exit(1)
+
 	if log_error:
 		try:
 			result[ERROR]=iErr.strip()
@@ -216,6 +224,12 @@ def run(tool, directory, timeout, resultFile, PROCESSES_NUM, SOLVED_PROBLEM, max
 # run("veriT_reduce", "test", 20, "veriT_reduce.csv", 4, SMT2, 400000, "--disable-banner --disable-print-success")
 if unsound_finding:
 	run("veriT", 
-		"/home/tungvx/raSAT/development_ver/raSAT/Test/smtlib-20140121/QF_NRA/", 
-		20, "veriT.csv", 1, SMT2, 400000, "--disable-banner --disable-print-success")
+		"/home/tungvx/raSAT/development_ver/raSAT/Test/smtlib-20140121/QF_NRA/meti-tarski", 
+		# "/home/tungvx/Desktop/work_sync/higher_education/verit/veriT",
+		200, "veriT.csv", 4, SMT2, 400000, "--disable-banner --disable-print-success --reduce-path=/home/tungvx/Desktop/work_sync/higher_education/verit/veriT/extern/reduce-new/bin/redcsl")
+	# run("z3", 
+	# 	# "/home/tungvx/raSAT/development_ver/raSAT/Test/smtlib-20140121/QF_NRA/", 
+	# 	"/home/tungvx/Desktop/work_sync/higher_education/verit/veriT",
+	# 	20, "z3.csv", 1, SMT2, 400000, "")
+	
 # run("veriT_raSAT", "test", 30, "veriT_raSAT.csv", 4, SMT2, 400000, "--disable-banner --disable-print-success")
