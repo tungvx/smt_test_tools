@@ -107,10 +107,10 @@ def solve(args):
 	wall_timeout = timeout
 
 	command = "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) \
-							+ "; bash -c \"TIMEFORMAT='time %3U time'; time timeout " + str(wall_timeout) + " ./" + tool + " " \
+							+ "; bash -c \"TIMEFORMAT='time %3U time'; time timeout " + str(wall_timeout) + " " + tool + " " \
 							+  flags + " " + filePath + "\""
 		
-		# print (command + "\n")
+	print (command + "\n")
 
 	try:
 		proc = subprocess.Popen(command,stdout=subprocess.PIPE, 
@@ -137,7 +137,7 @@ def solve(args):
 
 	# extract running time from iErr
 	try:
-		timeRegex = re.search("time (\d+\.\d+ \+ \d+\.\d+) time", iErr.strip())
+		timeRegex = re.search("time (\d+\.\d+) time", iErr.strip())
 		result[CPU_TIME] = eval(timeRegex.group(1))
 	except Exception:
 		result[CPU_TIME] = "Unparsable output"
@@ -223,10 +223,11 @@ def run(tool, directory, timeout, resultFile, PROCESSES_NUM, SOLVED_PROBLEM, max
 # run("z3", "Test/test", 30, "z3.csv", 4, SMT2, 1000000)
 # run("veriT_reduce", "test", 20, "veriT_reduce.csv", 4, SMT2, 400000, "--disable-banner --disable-print-success")
 if unsound_finding:
-	run("veriT", 
-		"/home/tungvx/raSAT/development_ver/raSAT/Test/smtlib-20140121/QF_NRA/meti-tarski", 
+	run("/home/tungvx/ownCloud/higher_education/verit/veriT/veriT", 
+		# "/home/tungvx/Downloads/QF_NRA/meti-tarski", 
+		"../test", 
 		# "/home/tungvx/Desktop/work_sync/higher_education/verit/veriT",
-		200, "veriT.csv", 4, SMT2, 400000, "--disable-banner --disable-print-success --reduce-path=/home/tungvx/Desktop/work_sync/higher_education/verit/veriT/extern/reduce-new/bin/redcsl")
+		20, "veriT.csv", 4, SMT2, 400000, "--disable-banner --disable-print-success --reduce-path=/home/tungvx/ownCloud/higher_education/verit/veriT/reduce --nla-raSAT-epsilon=3 --nla-raSAT-reduce-epsilon=6")
 	# run("z3", 
 	# 	# "/home/tungvx/raSAT/development_ver/raSAT/Test/smtlib-20140121/QF_NRA/", 
 	# 	"/home/tungvx/Desktop/work_sync/higher_education/verit/veriT",

@@ -7,7 +7,7 @@ smt2Files = []
 for root, dirnames, filenames in os.walk(sys.argv[1]):
 	for filename in filenames:
 		if filename.endswith(SMT2):
-			smt2Files.append(os.path.join(root, filename))
+			smt2Files.append(os.path.abspath(os.path.join(root, filename)))
 
 with open("tasks.dict", "w+") as tasks:
 	tasks.write("{\n")

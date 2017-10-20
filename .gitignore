@@ -1,0 +1,5 @@
+*.pyc
+*.log
+xc40/run
+xc40/tasks.dict
+*.csv
