@@ -64,7 +64,7 @@ with open(str(rank)+".csv", "w+", 1) as outfile:
                 except Exception:
                     pass
                     
-                result[TIME] = endTime - startTime
+                result[TIME] = time.time() - startTime
                 result[CPU_TIME] = result[TIME]
 
                 continue
