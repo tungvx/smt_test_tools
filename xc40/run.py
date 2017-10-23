@@ -63,7 +63,7 @@ with open(str(rank)+".csv", "w+", 1) as outfile:
                     os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
                 except Exception:
                     pass
-
+                    
                 result[TIME] = endTime - startTime
                 result[CPU_TIME] = result[TIME]
 
