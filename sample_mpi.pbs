@@ -11,9 +11,9 @@ export PATH=$HOME/py35/bin:${PATH}
 timeout=2500
 memory=8000000 #kbytes
 flags="'--disable-banner --disable-print-success'"
-benchmarks="'/work/tungvx/QF_NRA'"
+benchmarks="'/work/s1520002/QF_NRA'"
 toolname=veriT
-executable="$toolname"
+executable="/work/s1520002/verit/veriT/$toolname"
 pyfile=$toolname".py"
 outputfile="'"$toolname".csv'"
 
@@ -22,7 +22,7 @@ problemtype=SMT2
 paralleljobs=160 #number of parallel jobs
 
 export STAREXEC_CPU_LIMIT=$timeout
-export VERIT_REDUCE_PATH=/work/tungvx/reduce/bin/redcsl
+export VERIT_REDUCE_PATH=/work/s1520002/verit/veriT/extern/reduce/bin/redpsl
 
 #sh raSAT.sh zankl 0.1 500
 cp /home/s1310007/smt_test_tools/run_mpi.py $pyfile
@@ -30,7 +30,7 @@ cp /home/s1310007/smt_test_tools/run_mpi.py $pyfile
 # set permission for the executable
 chmod +x $executable
 
-echo "run ('$executable', $benchmarks, $timeout, $outputfile, $problemtype, $memory, $flags)" >> $pyfile
+echo "run ('toolname', '$executable', $benchmarks, $timeout, $outputfile, $problemtype, $memory, $flags)" >> $pyfile
 
 mpirun -np $paralleljobs python $pyfile
 

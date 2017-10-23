@@ -52,396 +52,402 @@ storereducelog = args.storereducelog
 cp_to_pwd = args.cp_to_pwd
 
 def gen_bounds(root, filename):
-	filePath = os.path.join(root, filename)
-	with open(filePath, 'r') as inputFile:
-		content = inputFile.read()
-		# content = content.replace('(check-sat)', '').strip()
-		# content = content.replace('(exit)', '').strip()
+    filePath = os.path.join(root, filename)
+    with open(filePath, 'r') as inputFile:
+        content = inputFile.read()
+        # content = content.replace('(check-sat)', '').strip()
+        # content = content.replace('(exit)', '').strip()
 
-		asserts = []
-		for m in re.finditer(r"\(declare-fun (.*) \(\) (Real|Int)\)", content):
-			asserts.append('(assert (>= {} {}))'.format (m.group(1), LOWER_BOUND))
-			asserts.append('(assert (<= {} {}))'.format (m.group(1), UPPER_BOUND))
+        asserts = []
+        for m in re.finditer(r"\(declare-fun (.*) \(\) (Real|Int)\)", content):
+            asserts.append('(assert (>= {} {}))'.format (m.group(1), LOWER_BOUND))
+            asserts.append('(assert (<= {} {}))'.format (m.group(1), UPPER_BOUND))
 
-		# content += '\n' + '\n'.join(asserts)
-		# content += '\n(check-sat)\n'
-		# content += '(exit)\n'
+        # content += '\n' + '\n'.join(asserts)
+        # content += '\n(check-sat)\n'
+        # content += '(exit)\n'
 
-		# add assertions into the content:
-		content = content.replace('(check-sat)', '\n'.join(asserts) + '\n(check-sat)')
+        # add assertions into the content:
+        content = content.replace('(check-sat)', '\n'.join(asserts) + '\n(check-sat)')
 
-		# print (content)
+        # print (content)
 
-		# Write content into new file:
-		with open(filePath + BOUNDED_SMT2, 'w+') as boundFile:
-			boundFile.write(content)
+        # Write content into new file:
+        with open(filePath + BOUNDED_SMT2, 'w+') as boundFile:
+            boundFile.write(content)
 
-		return filename + BOUNDED_SMT2
+        return filename + BOUNDED_SMT2
 
 def process_gurobi_key():
-	import socket
-	hostname = socket.gethostname()
-	
-	# check if license exist:
-	if not os.path.exists("/work/tungvx/gurobi/%s/gurobi.lic" % (hostname, )):
-		with open("/home/s1310007/licenses.gurobi","r") as myfile:
-			license = eval(myfile.read())[hostname]
-			os.popen("echo /work/tungvx/gurobi/%s | grbgetkey %s" % (hostname, license,))
+    import socket
+    hostname = socket.gethostname()
+    
+    # check if license exist:
+    if not os.path.exists("/work/tungvx/gurobi/%s/gurobi.lic" % (hostname, )):
+        with open("/home/s1310007/licenses.gurobi","r") as myfile:
+            license = eval(myfile.read())[hostname]
+            os.popen("echo /work/tungvx/gurobi/%s | grbgetkey %s" % (hostname, license,))
 
 
 def generate_if_not_exists(root, smt2Filename, SOLVED_PROBLEM):
-	if SMT2 == SOLVED_PROBLEM:
-		return smt2Filename
-	elif BOUNDED_SMT2 == SOLVED_PROBLEM:
-		return gen_bounds(root, smt2Filename)
+    if SMT2 == SOLVED_PROBLEM:
+        return smt2Filename
+    elif BOUNDED_SMT2 == SOLVED_PROBLEM:
+        return gen_bounds(root, smt2Filename)
 
 def remove_file(filePath):
-	try:
-		os.remove(filePath)
-	except OSError:
-		pass
+    try:
+        os.remove(filePath)
+    except OSError:
+        pass
 
-def solve(tool, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RESULT, flags):
-	filename = generate_if_not_exists(root, smt2Filename, SOLVED_PROBLEM)
-	# print timeout
+def solve(tool, tool_exec, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RESULT, flags):
+    filename = generate_if_not_exists(root, smt2Filename, SOLVED_PROBLEM)
+    # print timeout
 
-	full_filename = os.path.join(root, filename)
+    full_filename = os.path.join(root, filename)
 
-	result= {PROBLEM:os.path.join(root, filename)}
+    result= {PROBLEM:os.path.join(root, filename)}
 
-	#try to get the result of the problem:
-	try:
-		f = open(os.path.join(root, filename))
-		m = re.search('\(set-info :status (sat|unsat|unknown)\)', f.read())
-		if m:
-			result[RESULT]=m.group(1)
-	except IOError:
-		pass
-	
-	# command = "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) + "; ./" + tool + " " +  flags + " " + os.path.join(root, filename)
-	# command = "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) \
-	#           + "; /usr/bin/time --format='time %U + %S time' ./" + tool + " " \
-	#           +  flags + " " + os.path.join(root, filename)
+    #try to get the result of the problem:
+    try:
+        f = open(os.path.join(root, filename))
+        m = re.search('\(set-info :status (sat|unsat|unknown)\)', f.read())
+        if m:
+            result[RESULT]=m.group(1)
+    except IOError:
+        pass
+    
+    # command = "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) + "; ./" + tool + " " +  flags + " " + os.path.join(root, filename)
+    # command = "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) \
+    #           + "; /usr/bin/time --format='time %U + %S time' ./" + tool + " " \
+    #           +  flags + " " + os.path.join(root, filename)
 
-	startTime = time.time()
-	wall_timeout = timeout
-	
+    startTime = time.time()
+    wall_timeout = timeout
+    
 
-	import random
-	import sys
-	seed = random.randrange(0, 2147483647)
+    import random
+    import sys
+    seed = random.randrange(0, 2147483647)
 
-	if scrambling:
-		command = "rm -rf scrambler.smt2 && ./process " + full_filename \
-					+ " " + str(seed) + " > scrambler.smt2 &&"
-		new_smtfile = "scrambler.smt2"
-	else:	
-		command = ""
-		new_smtfile = full_filename
+    if scrambling:
+        command = "rm -rf scrambler.smt2 && ./process " + full_filename \
+                    + " " + str(seed) + " > scrambler.smt2 &&"
+        new_smtfile = "scrambler.smt2"
+    else:   
+        command = ""
+        new_smtfile = full_filename
 
-	command += "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) \
-					+ "; bash -c 'TIMEFORMAT=\"{\\\"CPU time\\\": %3U + %3S, \\\"Wall time\\\": %3R}\"; time timeout " + str(wall_timeout) + " ./" + tool + " " \
-					+  flags + " " + new_smtfile + "'"
-	
+    command += "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) \
+                    + "; bash -c 'TIMEFORMAT=\"{\\\"CPU time\\\": %3U + %3S, \\\"Wall time\\\": %3R}\"; time timeout " + str(wall_timeout) + " " + tool_exec + " " \
+                    +  flags + " " + new_smtfile + "'"
+    
 
-	if gurobi_key:
-		import socket
-		hostname = socket.gethostname()
-		command = "export GRB_LICENSE_FILE=/work/tungvx/gurobi/%s/gurobi.lic; " % (hostname, ) + command
+    if gurobi_key:
+        import socket
+        hostname = socket.gethostname()
+        command = "export GRB_LICENSE_FILE=/work/tungvx/gurobi/%s/gurobi.lic; " % (hostname, ) + command
 
-	# print (command)
-	try:
-		proc = subprocess.Popen(command,stdout=subprocess.PIPE, 
-													stderr=subprocess.PIPE, universal_newlines = True, 
-													shell=True, preexec_fn=os.setsid)
-	except Exception:
-		pass    
-	
-	try:    
-		iOut, iErr = proc.communicate(timeout=wall_timeout)
-	except TimeoutExpired:
-		result[TOOL_RESULT] = "Timed out"
-		try:
-			os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
-		except Exception:
-			pass
+    # print (command)
 
 
-	endTime = time.time()
-	
-	# print ("Returned code:",proc.returncode)
+    try:
+        proc = subprocess.Popen(command,stdout=subprocess.PIPE, 
+                                                    stderr=subprocess.PIPE, universal_newlines = True, 
+                                                    shell=True, preexec_fn=os.setsid)
+    except Exception:
+        pass    
+    
+    try:    
+        iOut, iErr = proc.communicate(timeout=wall_timeout)
+    except TimeoutExpired:
+        result[TOOL_RESULT] = "Timed out"
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+        except Exception:
+            pass
+    except:
+        pass
 
-	# print ("ER:" + iErr.strip() + ":End ER")
-	# print ("IO:" + iOut.strip() + ":End IO")
+    # print (result.get(TOOL_RESULT))
 
-	# extract running time from iErr
-	try:
-		m = re.search("\{\"CPU time\": (.*), \"Wall time\": (.*)\}", iErr.strip())
-		result[CPU_TIME] = eval(m.group(1))
-		result[TIME] = eval(m.group(2))
-	except Exception:
-		result[TIME] = endTime - startTime
-		result[CPU_TIME] = result[TIME]
+    endTime = time.time()
+    
+    # print ("Returned code:",proc.returncode)
 
-	try:
-		result[TOOL_RESULT] = iOut.strip()
-	except Exception:
-		pass
+    # print ("ER:" + iErr.strip() + ":End ER")
+    # print ("IO:" + iOut.strip() + ":End IO")
 
-	if not result[TOOL_RESULT]:
-		try:	
-			if "SIGCHLD" in iErr:
-				result[TOOL_RESULT] = "SIGCHLD"
-			elif "*** sfto_fctrf: factorization failed" in open("libreduce.log").read():
-				result[TOOL_RESULT] = "factorization"
-		except Exception:
-			result[TOOL_RESULT] = ""
-	
-	if log_error:
-		try:
-			result[ERROR]=iErr.strip()
-		except Exception:
-			result[ERROR]=""
+    # extract running time from iErr
+    try:
+        m = re.search("\{\"CPU time\": (.*), \"Wall time\": (.*)\}", iErr.strip())
+        result[CPU_TIME] = eval(m.group(1))
+        result[TIME] = eval(m.group(2))
+    except Exception:
+        result[TIME] = endTime - startTime
+        result[CPU_TIME] = result[TIME]
 
-	# print (result[DREAL_RESULT])
-	# print (result)
-	# remove_file(result[PROBLEM])
-	return result
+    try:
+        result[TOOL_RESULT] = iOut.strip()
+    except Exception:
+        pass
 
-def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000, flags=""):
-	comm = MPI.COMM_WORLD
-	rank = comm.Get_rank()
-	size = comm.Get_size()
+    if not result[TOOL_RESULT]:
+        try:    
+            if "SIGCHLD" in iErr:
+                result[TOOL_RESULT] = "SIGCHLD"
+            elif "*** sfto_fctrf: factorization failed" in open("libreduce.log").read():
+                result[TOOL_RESULT] = "factorization"
+        except Exception:
+            result[TOOL_RESULT] = ""
+    
+    if log_error:
+        try:
+            result[ERROR]=iErr.strip()
+        except Exception:
+            result[ERROR]=""
 
-	# we need the number of processes to be greater than 1
-	assert(size > 1)
+    # print (result[DREAL_RESULT])
+    # print (result)
+    # remove_file(result[PROBLEM])
+    return result
 
-	TOOL_RESULT = tool + " result"
+def run(tool, tool_exec, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000, flags=""):
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    size = comm.Get_size()
 
-	HEADERS = [PROBLEM, RESULT, CPU_TIME, TIME, TOOL_RESULT]
+    # we need the number of processes to be greater than 1
+    assert(size > 1)
 
-	if rank == 0:
+    TOOL_RESULT = tool + " result"
 
-		# create log folder name and send to all other ranks
-		import datetime
-		import time
+    HEADERS = [PROBLEM, RESULT, CPU_TIME, TIME, TOOL_RESULT]
 
-		# try to create log folder until succesfull
-		while True:
-			running_date = datetime.datetime.fromtimestamp(time.time())
-			log_folder_name = "logs_" + running_date.strftime('%Y-%m-%d_%H-%M-%S') +"_"+os.path.basename(os.path.normpath(directory))
-			
-			# create the folder
-			try:
-				os.makedirs(log_folder_name)
-				break
-			except FileExistsError:
-				# sleep the thread a few
-				sleep(random.uniform(0.001, 1))
+    if rank == 0:
 
-		# create a README in 
-		if tool == "veriT":
-			with open(os.path.join(log_folder_name, "README"), "w+") as readme:
-				try:
-					reduce_rev = os.popen("cd /work/tungvx/verit/veriT/extern/reduce-new/ && svn info | grep \"Revision\" | awk '{print $2}'").read().rstrip()
-				except Exception as e:
-					reduce_rev = ""
+        # create log folder name and send to all other ranks
+        import datetime
+        import time
 
-				readme.write("Reduce rev: "+ reduce_rev +"\n")
+        # try to create log folder until succesfull
+        while True:
+            running_date = datetime.datetime.fromtimestamp(time.time())
+            log_folder_name = "logs_" + running_date.strftime('%Y-%m-%d_%H-%M-%S') +"_"+os.path.basename(os.path.normpath(directory))
+            
+            # create the folder
+            try:
+                os.makedirs(log_folder_name)
+                break
+            except FileExistsError:
+                # sleep the thread a few
+                sleep(random.uniform(0.001, 1))
 
-				try:
-					reduce_path = os.popen("echo $VERIT_REDUCE_PATH").read().rstrip()
-				except Exception as e:
-					reduce_path = ""
+        # create a README in 
+        # if tool == "veriT":
+        if False:
+            with open(os.path.join(log_folder_name, "README"), "w+") as readme:
+                try:
+                    reduce_rev = os.popen("cd /work/tungvx/verit/veriT/extern/reduce-new/ && svn info | grep \"Revision\" | awk '{print $2}'").read().rstrip()
+                except Exception as e:
+                    reduce_rev = ""
 
-				readme.write("Reduce path: "+ reduce_path +"\n")
+                readme.write("Reduce rev: "+ reduce_rev +"\n")
 
-				readme.write("Scrambling: " + ("Yes" if scrambling else "No") + "\n");
-				
-				try:
-					veriT_branch = os.popen("cd /work/tungvx/verit/veriT && git rev-parse --abbrev-ref HEAD").read().rstrip()
-					veriT_rev = os.popen("cd /work/tungvx/verit/veriT && git rev-parse HEAD").read().rstrip()
-				except Exception as e:
-					veriT_branch = ""
-					veriT_rev = ""
+                try:
+                    reduce_path = os.popen("echo $VERIT_REDUCE_PATH").read().rstrip()
+                except Exception as e:
+                    reduce_path = ""
 
-				readme.write("veriT rev: "+veriT_branch+"-"+veriT_rev+"\n")
+                readme.write("Reduce path: "+ reduce_path +"\n")
 
-				readme.write("Date of running experiment: " + running_date.strftime('%Y-%m-%d_%H:%M:%S')+ "\n")
-				readme.write("Timeout: "+ str(timeout)+ " seconds\n")
-				readme.write("Memory: "+ str(max_memory)+ " KBs\n")
-				readme.write("veriT options: "+ str(flags)+ "\n")
+                readme.write("Scrambling: " + ("Yes" if scrambling else "No") + "\n");
+                
+                try:
+                    veriT_branch = os.popen("cd /work/tungvx/verit/veriT && git rev-parse --abbrev-ref HEAD").read().rstrip()
+                    veriT_rev = os.popen("cd /work/tungvx/verit/veriT && git rev-parse HEAD").read().rstrip()
+                except Exception as e:
+                    veriT_branch = ""
+                    veriT_rev = ""
 
+                readme.write("veriT rev: "+veriT_branch+"-"+veriT_rev+"\n")
 
-		sent_comms = []
-		for index in range(size-1):
-			receiving_rank = index + 1
-			sent_comms.append(comm.isend(log_folder_name, receiving_rank))
-
-		for sent_comm in sent_comms:
-			sent_comm.wait()
-
-		smt2_files = []
-		for root, dirnames, filenames in os.walk(directory):
-			for filename in filenames:
-				if filename.endswith(SMT2): #and "Ultimate" not in root and "Lasso" not in root:
-					smt2_files.append((filename, root));		
-
-		total = len(smt2_files)
-		received = 0
-		# receiving result:
-
-		sent_comms = []
-
-		full_result_file = os.path.join(log_folder_name, resultFile)
-		with open(full_result_file, 'w+', 1) as csvfile:
-			spamwriter = csv.DictWriter(csvfile, fieldnames=HEADERS, extrasaction='ignore')
-			spamwriter.writeheader()
-			
-			available_ranks = [i for i in range(1, size)]
-			while smt2_files:
-				while not available_ranks:
-					(proc_rank, result) = comm.recv(source=MPI.ANY_SOURCE)		
-					available_ranks.append(proc_rank);
-					csvfile.write(result)
-					received += 1
-
-				filename_root = smt2_files.pop();
-				proc_rank = available_ranks.pop();
-				sent_comms.append(comm.isend(filename_root, proc_rank))
-
-			
-			while (received < total):
-				(proc_rank, result) = comm.recv(source=MPI.ANY_SOURCE)		
-				csvfile.write(result)
-				received += 1
-
-		# copy results file into log folder:
-		if cp_to_pwd:
-			try:
-				os.system("cp " + full_result_file + " .");
-			except Exception:
-				pass
-
-		for i in range(1, size):
-			sent_comms.append(comm.isend(("exit", "exit"), i))
-
-		for sent_comm in sent_comms:
-			sent_comm.wait()
-
-	else:
-		# first, receiving log folder name:
-		log_folder_name = comm.recv(source=0)
-
-		# data = comm.recv(source=0)
-		# print ("Rank", rank, "receiving", len(data), "problems")
-
-		if gurobi_key:
-			process_gurobi_key()
-
-		if change_dir:
-			# make sub-dir
-			sub_dir = log_folder_name + "/" + str(rank)
-			try:
-				os.makedirs(sub_dir)
-			except FileExistsError:
-				pass
-
-			# copy files into sub-dir
-			shutil.copy2(tool, sub_dir)
-			# shutil.copy2("cvc4", sub_dir)
-			if scrambling:
-				shutil.copy2("/work/tungvx/scrambler/process", sub_dir)
-				shutil.copy2("/work/tungvx/scrambler/scrambler", sub_dir)
-			#shutil.copy2("yices-smt2", sub_dir)
-			#shutil.copy2("main", sub_dir)
-			#shutil.copy2("tropical.py", sub_dir)
-
-			# change working dir:
-			os.chdir(sub_dir)
-
-		if change_dir:
-			new_log_folder_name = "../"
-		else:
-			new_log_folder_name = log_folder_name
-
-		sent_comms = []
-		# receive problem, solve it and return result:
-		while True:
-			with io.StringIO() as csvfile:
-				spamwriter = csv.DictWriter(csvfile, fieldnames=HEADERS, extrasaction='ignore')
-				(smt2Filename, root) = comm.recv(source=0)
-				if smt2Filename=="exit" and root == "exit":
-					break
-
-				result = solve(tool, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RESULT, flags)
-				for key in result:
-					result[key] = str(result[key])
-
-				spamwriter.writerow(result)
-				sent_comms.append(comm.isend((rank, csvfile.getvalue()), 0))
-
-				# cp linear formulas
-				if collect_lra:
-					linear_smt_path = ".." +  os.path.abspath(result[PROBLEM].replace(".smt2", "_stropsat.smt2"))
-					linear_smt_folder = os.path.dirname(linear_smt_path)
-					try:
-						os.makedirs(linear_smt_folder)
-					except FileExistsError:
-						pass
-					try:
-						shutil.copy2("test.smt2",linear_smt_path)
-						from tempfile import mkstemp
-						from shutil import move
-						from os import remove, close
-						#Create temp file
-						fh, abs_path = mkstemp()
-						with open(abs_path,'w') as new_file:
-							with open(linear_smt_path) as old_file:
-								for line in old_file:
-									new_file.write(line.replace("--benchmark--", result[PROBLEM][13:]).replace(";--status--", "(set-info :status {0})".format("unsat" if "unknown" in result[TOOL_RESULT] else ("sat" if "sat" in result[TOOL_RESULT] else "unknown"),)))
-						close(fh)
-						#Remove original file
-						remove(linear_smt_path)
-						#Move new file
-						move(abs_path, linear_smt_path)
-					except Exception as e:
-						pass
-				# write error to error file
-				if log_error:
-					error_file_path = new_log_folder_name + os.path.abspath(result[PROBLEM])+".err.txt"
-					error_folder = os.path.dirname(error_file_path)
-					try:
-						os.makedirs(error_folder)
-					except FileExistsError:
-						pass
-
-					try:
-						with open(error_file_path, 'w+', 1) as errFile:
-							errFile.write(result[ERROR])
-					except Exception as e:
-						print (e)
-						pass
-
-				if storereducelog:
-					reduce_log_path=new_log_folder_name + os.path.abspath(result[PROBLEM].replace(".smt2", "_libreduce.log"))
-					reduce_log_folder = os.path.dirname(reduce_log_path)
-					try:
-						os.makedirs(reduce_log_folder)
-					except FileExistsError:
-						pass
-
-					try:
-						shutil.copy2("libreduce.log",reduce_log_path)
-					except Exception as e:
-						pass
-		# remove pwd
-		if change_dir:
-			shutil.rmtree(os.getcwd())
-
-		for sent_comm in sent_comms:
-			sent_comm.wait()
+                readme.write("Date of running experiment: " + running_date.strftime('%Y-%m-%d_%H:%M:%S')+ "\n")
+                readme.write("Timeout: "+ str(timeout)+ " seconds\n")
+                readme.write("Memory: "+ str(max_memory)+ " KBs\n")
+                readme.write("veriT options: "+ str(flags)+ "\n")
 
 
-# run("veriT", "../test", 30, "veriT.csv", SMT2, 40000, "--disable-banner --disable-print-success")	    
-# run("./veriT", "/work/tungvx/test", 30, "veriT.csv", SMT2, 40000, "--disable-banner --disable-print-success")	    
+        sent_comms = []
+        for index in range(size-1):
+            receiving_rank = index + 1
+            sent_comms.append(comm.isend(log_folder_name, receiving_rank))
+
+        for sent_comm in sent_comms:
+            sent_comm.wait()
+
+        smt2_files = []
+        for root, dirnames, filenames in os.walk(directory):
+            for filename in filenames:
+                if filename.endswith(SMT2): #and "Ultimate" not in root and "Lasso" not in root:
+                    smt2_files.append((filename, root));        
+
+        total = len(smt2_files)
+        received = 0
+        # receiving result:
+
+        sent_comms = []
+
+        full_result_file = os.path.join(log_folder_name, resultFile)
+        with open(full_result_file, 'w+', 1) as csvfile:
+            spamwriter = csv.DictWriter(csvfile, fieldnames=HEADERS, extrasaction='ignore')
+            spamwriter.writeheader()
+            
+            available_ranks = [i for i in range(1, size)]
+            while smt2_files:
+                while not available_ranks:
+                    (proc_rank, result) = comm.recv(source=MPI.ANY_SOURCE)      
+                    available_ranks.append(proc_rank);
+                    csvfile.write(result)
+                    received += 1
+
+                filename_root = smt2_files.pop();
+                proc_rank = available_ranks.pop();
+                sent_comms.append(comm.isend(filename_root, proc_rank))
+
+            
+            while (received < total):
+                (proc_rank, result) = comm.recv(source=MPI.ANY_SOURCE)      
+                csvfile.write(result)
+                received += 1
+
+        # copy results file into log folder:
+        if cp_to_pwd:
+            try:
+                os.system("cp " + full_result_file + " .");
+            except Exception:
+                pass
+
+        for i in range(1, size):
+            sent_comms.append(comm.isend(("exit", "exit"), i))
+
+        for sent_comm in sent_comms:
+            sent_comm.wait()
+
+    else:
+        # first, receiving log folder name:
+        log_folder_name = comm.recv(source=0)
+
+        # data = comm.recv(source=0)
+        # print ("Rank", rank, "receiving", len(data), "problems")
+
+        if gurobi_key:
+            process_gurobi_key()
+
+        if change_dir:
+            # make sub-dir
+            sub_dir = log_folder_name + "/" + str(rank)
+            try:
+                os.makedirs(sub_dir)
+            except FileExistsError:
+                pass
+
+            # copy files into sub-dir
+            shutil.copy2(tool, sub_dir)
+            # shutil.copy2("cvc4", sub_dir)
+            if scrambling:
+                shutil.copy2("/work/tungvx/scrambler/process", sub_dir)
+                shutil.copy2("/work/tungvx/scrambler/scrambler", sub_dir)
+            #shutil.copy2("yices-smt2", sub_dir)
+            #shutil.copy2("main", sub_dir)
+            #shutil.copy2("tropical.py", sub_dir)
+
+            # change working dir:
+            os.chdir(sub_dir)
+
+        if change_dir:
+            new_log_folder_name = "../"
+        else:
+            new_log_folder_name = log_folder_name
+
+        sent_comms = []
+        # receive problem, solve it and return result:
+        while True:
+            with io.StringIO() as csvfile:
+                spamwriter = csv.DictWriter(csvfile, fieldnames=HEADERS, extrasaction='ignore')
+                (smt2Filename, root) = comm.recv(source=0)
+                if smt2Filename=="exit" and root == "exit":
+                    break
+
+                result = solve(tool, tool_exec, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RESULT, flags)
+                for key in result:
+                    result[key] = str(result[key])
+
+                spamwriter.writerow(result)
+                sent_comms.append(comm.isend((rank, csvfile.getvalue()), 0))
+
+                # cp linear formulas
+                if collect_lra:
+                    linear_smt_path = ".." +  os.path.abspath(result[PROBLEM].replace(".smt2", "_stropsat.smt2"))
+                    linear_smt_folder = os.path.dirname(linear_smt_path)
+                    try:
+                        os.makedirs(linear_smt_folder)
+                    except FileExistsError:
+                        pass
+                    try:
+                        shutil.copy2("test.smt2",linear_smt_path)
+                        from tempfile import mkstemp
+                        from shutil import move
+                        from os import remove, close
+                        #Create temp file
+                        fh, abs_path = mkstemp()
+                        with open(abs_path,'w') as new_file:
+                            with open(linear_smt_path) as old_file:
+                                for line in old_file:
+                                    new_file.write(line.replace("--benchmark--", result[PROBLEM][13:]).replace(";--status--", "(set-info :status {0})".format("unsat" if "unknown" in result[TOOL_RESULT] else ("sat" if "sat" in result[TOOL_RESULT] else "unknown"),)))
+                        close(fh)
+                        #Remove original file
+                        remove(linear_smt_path)
+                        #Move new file
+                        move(abs_path, linear_smt_path)
+                    except Exception as e:
+                        pass
+                # write error to error file
+                if log_error:
+                    error_file_path = new_log_folder_name + os.path.abspath(result[PROBLEM])+".err.txt"
+                    error_folder = os.path.dirname(error_file_path)
+                    try:
+                        os.makedirs(error_folder)
+                    except FileExistsError:
+                        pass
+
+                    try:
+                        with open(error_file_path, 'w+', 1) as errFile:
+                            errFile.write(result[ERROR])
+                    except Exception as e:
+                        print (e)
+                        pass
+
+                if storereducelog:
+                    reduce_log_path=new_log_folder_name + os.path.abspath(result[PROBLEM].replace(".smt2", "_libreduce.log"))
+                    reduce_log_folder = os.path.dirname(reduce_log_path)
+                    try:
+                        os.makedirs(reduce_log_folder)
+                    except FileExistsError:
+                        pass
+
+                    try:
+                        shutil.copy2("libreduce.log",reduce_log_path)
+                    except Exception as e:
+                        pass
+        # remove pwd
+        if change_dir:
+            shutil.rmtree(os.getcwd())
+
+        for sent_comm in sent_comms:
+            sent_comm.wait()
+
+
+run("veriT", "./veriT", "../test", 30, "veriT.csv", SMT2, 4000000, "--disable-banner --disable-print-success --reduce-path=/home/tungvx/ownCloud/higher_education/verit/veriT/extern/reduce/bin/redpsl")        
+# run("./veriT", "/work/tungvx/test", 30, "veriT.csv", SMT2, 40000, "--disable-banner --disable-print-success")     
