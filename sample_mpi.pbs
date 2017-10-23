@@ -3,6 +3,8 @@
 #PBS -l select=16
 #PBS -q HS-IO
 
+paralleljobs=160 #number of parallel jobs
+
 cd $PBS_O_WORKDIR
 
 export PATH=$HOME/py35/bin:${PATH}
@@ -11,7 +13,7 @@ export PATH=$HOME/py35/bin:${PATH}
 timeout=2500
 memory=8000000 #kbytes
 flags="'--disable-banner --disable-print-success'"
-benchmarks="'/work/s1520002/QF_NRA'"
+benchmarks="'/work/s1520002/QF_NRA/meti-tarski'"
 toolname=veriT
 executable="/work/s1520002/verit/veriT/$toolname"
 pyfile=$toolname".py"
@@ -19,13 +21,12 @@ outputfile="'"$toolname".csv'"
 
 #special settings
 problemtype=SMT2
-paralleljobs=160 #number of parallel jobs
 
 export STAREXEC_CPU_LIMIT=$timeout
 export VERIT_REDUCE_PATH=/work/s1520002/verit/veriT/extern/reduce/bin/redpsl
 
 #sh raSAT.sh zankl 0.1 500
-cp /home/s1310007/smt_test_tools/run_mpi.py $pyfile
+cp /home/s1520002/smt_test_tools/run_mpi.py $pyfile
 
 # set permission for the executable
 chmod +x $executable
