@@ -51,7 +51,6 @@ scrambling = args.scrambling
 storereducelog = args.storereducelog
 cp_to_pwd = args.cp_to_pwd
 
-
 def gen_bounds(root, filename):
 	filePath = os.path.join(root, filename)
 	with open(filePath, 'r') as inputFile:
@@ -444,5 +443,5 @@ def run(tool, directory, timeout, resultFile, SOLVED_PROBLEM, max_memory=4000000
 			sent_comm.wait()
 
 
-# run("../veriT", "../test", 30, "veriT.csv", SMT2, 40000, "--disable-banner --disable-print-success")	    
+# run("veriT", "../test", 30, "veriT.csv", SMT2, 40000, "--disable-banner --disable-print-success")	    
 # run("./veriT", "/work/tungvx/test", 30, "veriT.csv", SMT2, 40000, "--disable-banner --disable-print-success")	    
