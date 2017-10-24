@@ -26,6 +26,11 @@ TIME='time'
 CPU_TIME='CPU time'
 RESULT = 'status'
 ERROR = 'error'
+ICP_TIME = "ICP time"
+TESTING_TIME = "Testing time"
+DECOMP_TIME = "Decomp time"
+REDUCE_TIME = "Reduce time"
+IVT_TIME = "IVT time"
 
 LOWER_BOUND = '(- 1000)'
 UPPER_BOUND = '1000'
@@ -161,6 +166,7 @@ def solve(tool, tool_exec, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memo
     
     try:    
         iOut, iErr = proc.communicate(timeout=wall_timeout)
+        errStr = iErr.strip()
     except TimeoutExpired:
         result[TOOL_RESULT] = "Timed out"
         try:
@@ -181,7 +187,7 @@ def solve(tool, tool_exec, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memo
 
     # extract running time from iErr
     try:
-        m = re.search("\{\"CPU time\": (.*), \"Wall time\": (.*)\}", iErr.strip())
+        m = re.search("\{\"CPU time\": (.*), \"Wall time\": (.*)\}", errStr)
         result[CPU_TIME] = eval(m.group(1))
         result[TIME] = eval(m.group(2))
     except Exception:
@@ -208,6 +214,31 @@ def solve(tool, tool_exec, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memo
         except Exception:
             result[ERROR]=""
 
+    try:
+        result[ICP_TIME] = re.search("icp_time: (\d+\.\d+)", errStr).group(1)
+    except:
+        result[ICP_TIME] = "Failed"
+
+    try:
+        result[TESTING_TIME] = re.search("testing_time: (\d+\.\d+)", errStr).group(1)
+    except:
+        result[TESTING_TIME] = "Failed"
+
+    try:
+        result[IVT_TIME] = re.search("ivt_time: (\d+\.\d+)", errStr).group(1)
+    except:
+        result[IVT_TIME] = "Failed"
+
+    try:
+        result[DECOMP_TIME] = re.search("decomp_time: (\d+\.\d+)", errStr).group(1)
+    except:
+        result[DECOMP_TIME] = "Failed"
+
+    try:
+        result[REDUCE_TIME] = re.search("reduce_time: (\d+\.\d+)", errStr).group(1)
+    except:
+        result[REDUCE_TIME] = "Failed"
+
     # print (result[DREAL_RESULT])
     # print (result)
     # remove_file(result[PROBLEM])
@@ -223,7 +254,7 @@ def run(tool, tool_exec, directory, timeout, resultFile, SOLVED_PROBLEM, max_mem
 
     TOOL_RESULT = tool + " result"
 
-    HEADERS = [PROBLEM, RESULT, CPU_TIME, TIME, TOOL_RESULT]
+    HEADERS = [PROBLEM, RESULT, TOOL_RESULT, CPU_TIME, TIME, ICP_TIME, TESTING_TIME, IVT_TIME, DECOMP_TIME, REDUCE_TIME]
 
     if rank == 0:
 
@@ -449,5 +480,5 @@ def run(tool, tool_exec, directory, timeout, resultFile, SOLVED_PROBLEM, max_mem
             sent_comm.wait()
 
 
-# run("veriT", "./veriT", "../test", 30, "veriT.csv", SMT2, 4000000, "--disable-banner --disable-print-success --reduce-path=/home/tungvx/ownCloud/higher_education/verit/veriT/extern/reduce/bin/redpsl")        
+# run("veriT", "/home/tungvx/ownCloud/higher_education/verit/veriT/veriT", "../test", 30, "veriT.csv", SMT2, 4000000, "--disable-banner --disable-print-success --reduce-path=/home/tungvx/ownCloud/higher_education/verit/veriT/extern/reduce/bin/redpsl")        
 # run("./veriT", "/work/tungvx/test", 30, "veriT.csv", SMT2, 40000, "--disable-banner --disable-print-success")     
