@@ -24,7 +24,7 @@ int main(int argc, char **argv)
         for (id = 1; id < nprocs; id++) {
             MPI_Recv(msg, BUFSIZE, MPI_CHARACTER,
                      id, 10, MPI_COMM_WORLD, &istat);
-            printf("%s\n", msg);
+            // printf("%s\n", msg);
         }
 
         char command2[BUFSIZE];

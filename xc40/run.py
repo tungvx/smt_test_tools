@@ -59,15 +59,20 @@ with open(str(rank)+".csv", "w+", 1) as outfile:
                 errStr = iErr.strip()
             except TimeoutExpired:
                 result[RESULT] = "Timed out"
+
+                errStr = None
+                iOut = None
+                iErr = None
+                
                 try:
                     os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
                 except Exception:
                     pass
                     
-                result[TIME] = time.time() - startTime
-                result[CPU_TIME] = result[TIME]
+                # result[TIME] = time.time() - startTime
+                # result[CPU_TIME] = result[TIME]
 
-                continue
+                # continue
 
 
             endTime = time.time()
