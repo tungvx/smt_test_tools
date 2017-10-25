@@ -7,6 +7,7 @@ import subprocess
 import os
 from subprocess import TimeoutExpired
 import time
+import signal
 
 tasks = eval(open("tasks.dict").read())
 
