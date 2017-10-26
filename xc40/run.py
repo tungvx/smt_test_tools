@@ -8,6 +8,7 @@ import os
 from subprocess import TimeoutExpired
 import time
 import signal
+import psutil
 
 tasks = eval(open("tasks.dict").read())
 
@@ -15,6 +16,12 @@ rank = int(sys.argv[1])
 nprocs = int(sys.argv[2])
 
 smt2No = len(tasks)
+
+def kill(proc_pid):
+    process = psutil.Process(proc_pid)
+    for proc in process.children(recursive=True):
+        proc.kill()
+    process.kill()
 
 # print (rank, nprocs, smt2No)
 
@@ -50,7 +57,7 @@ with open(str(rank)+".csv", "w+", 1) as outfile:
             try:
                 proc = subprocess.Popen(command,stdout=subprocess.PIPE, 
                                                             stderr=subprocess.PIPE, universal_newlines = True, 
-                                                            shell=True, preexec_fn=os.setsid)
+                                                            shell=True)
             except Exception as e:
                 print (e)
                 pass   
@@ -66,7 +73,8 @@ with open(str(rank)+".csv", "w+", 1) as outfile:
                 iErr = None
                 
                 try:
-                    os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+                    # os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+                    kill(proc.pid)
                 except Exception:
                     pass
                     
