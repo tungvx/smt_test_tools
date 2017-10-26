@@ -12,6 +12,7 @@ import shutil
 import io
 from time import sleep
 import random
+import psutil
 
 SMT2=".smt2"
 BOUNDED_SMT2 = '.bound'
@@ -55,6 +56,12 @@ collect_lra = args.collect_lra
 scrambling = args.scrambling
 storereducelog = args.storereducelog
 cp_to_pwd = args.cp_to_pwd
+
+def kill(proc_pid):
+    process = psutil.Process(proc_pid)
+    for proc in process.children(recursive=True):
+        proc.kill()
+    process.kill()
 
 def gen_bounds(root, filename):
     filePath = os.path.join(root, filename)
@@ -160,7 +167,7 @@ def solve(tool, tool_exec, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memo
     try:
         proc = subprocess.Popen(command,stdout=subprocess.PIPE, 
                                                     stderr=subprocess.PIPE, universal_newlines = True, 
-                                                    shell=True, preexec_fn=os.setsid)
+                                                    shell=True)
     except Exception:
         pass    
     
@@ -170,7 +177,8 @@ def solve(tool, tool_exec, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memo
     except TimeoutExpired:
         result[TOOL_RESULT] = "Timed out"
         try:
-            os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+            # os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+            kill(proc.pid)
         except Exception:
             pass
     except:
