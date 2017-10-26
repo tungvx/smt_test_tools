@@ -46,7 +46,7 @@ with open(str(rank)+".csv", "w+", 1) as outfile:
             startTime = time.time()
             
             command = "ulimit -Sv " + str(config[MAX_MEMORY]) + "; ulimit -St " + str(config[TIMEOUT]) \
-                    + "; bash -c 'TIMEFORMAT=\"{\\\"CPU time\\\": %3U + %3S, \\\"Wall time\\\": %3R}\"; time timeout " \
+                    + "; bash -c 'TIMEFORMAT=\"{\\\"CPU time user\\\": %3U, \\\"Wall time\\\": %3R, \\\"CPU time sys\\\": %3S}\"; time timeout " \
                     + str(config[WALL_TIMEOUT]) + " " + config[TOOL_COMMAND] + " " +  config[FLAGS] + " " + tasks[idx] + "'"
 
             # command = "ls"
@@ -89,12 +89,14 @@ with open(str(rank)+".csv", "w+", 1) as outfile:
             # print (errStr)
 
             try:
-                m = re.search("\{\"CPU time\": (.*), \"Wall time\": (.*)\}", errStr)
-                result[CPU_TIME] = eval(m.group(1))
+                m = re.search("\{\"CPU time user\": (.*), \"Wall time\": (.*), \"CPU time sys\": (.*)\}", errStr)
+                result[CPU_TIME_USER] = eval(m.group(1))
+                result[CPU_TIME_SYS] = eval(m.group(3))
                 result[TIME] = eval(m.group(2))
             except Exception:
                 result[TIME] = endTime - startTime
-                result[CPU_TIME] = result[TIME]
+                result[CPU_TIME_USER] = "Failed"
+                result[CPU_TIME_SYS] = "Failed"
 
             try:
                 result[ICP_TIME] = re.search("icp_time: (\d+\.\d+)", errStr).group(1)
