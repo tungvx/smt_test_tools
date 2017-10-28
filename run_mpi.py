@@ -196,7 +196,7 @@ def solve(tool, tool_exec, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memo
 
     # extract running time from iErr
     try:
-        m = re.search("\{\"CPU time sys\": (.*), \"Wall time\": (.*), \"CPU time user\": (.*),\}", errStr)
+        m = re.search("\{\"CPU time sys\": (.*), \"Wall time\": (.*), \"CPU time user\": (.*)\}", errStr)
         result[CPU_TIME_SYS] = eval(m.group(1))
         result[CPU_TIME_USER] = eval(m.group(3))
         result[TIME] = eval(m.group(2))
