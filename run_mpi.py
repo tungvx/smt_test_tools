@@ -24,7 +24,8 @@ UNKNOWN = "unknown"
 
 PROBLEM='Problem'
 TIME='time'
-CPU_TIME='CPU time'
+CPU_TIME_SYS='CPU Sys'
+CPU_TIME_USER='CPU User'
 RESULT = 'status'
 ERROR = 'error'
 ICP_TIME = "ICP time"
@@ -152,7 +153,7 @@ def solve(tool, tool_exec, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memo
         new_smtfile = full_filename
 
     command += "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) \
-                    + "; bash -c 'TIMEFORMAT=\"{\\\"CPU time\\\": %3U + %3S, \\\"Wall time\\\": %3R}\"; time timeout " + str(wall_timeout) + " " + tool_exec + " " \
+                    + "; bash -c 'TIMEFORMAT=\"{\\\"CPU time sys\\\": %3S, \\\"Wall time\\\": %3R, \\\"CPU time user\\\": %3U}\"; time timeout " + str(wall_timeout) + " " + tool_exec + " " \
                     +  flags + " " + new_smtfile + "'"
     
 
@@ -195,12 +196,14 @@ def solve(tool, tool_exec, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memo
 
     # extract running time from iErr
     try:
-        m = re.search("\{\"CPU time\": (.*), \"Wall time\": (.*)\}", errStr)
-        result[CPU_TIME] = eval(m.group(1))
+        m = re.search("\{\"CPU time sys\": (.*), \"Wall time\": (.*), \"CPU time user\": (.*),\}", errStr)
+        result[CPU_TIME_SYS] = eval(m.group(1))
+        result[CPU_TIME_USER] = eval(m.group(3))
         result[TIME] = eval(m.group(2))
     except Exception:
         result[TIME] = endTime - startTime
-        result[CPU_TIME] = result[TIME]
+        result[CPU_TIME_SYS] = "Failed"
+        result[CPU_TIME_SYS] = "Failed"
 
     try:
         result[TOOL_RESULT] = iOut.strip()
@@ -262,7 +265,7 @@ def run(tool, tool_exec, directory, timeout, resultFile, SOLVED_PROBLEM, max_mem
 
     TOOL_RESULT = tool + " result"
 
-    HEADERS = [PROBLEM, RESULT, TOOL_RESULT, CPU_TIME, TIME, ICP_TIME, TESTING_TIME, IVT_TIME, DECOMP_TIME, REDUCE_TIME]
+    HEADERS = [PROBLEM, RESULT, TOOL_RESULT, TIME, CPU_TIME_SYS, CPU_TIME_USER, ICP_TIME, TESTING_TIME, IVT_TIME, DECOMP_TIME, REDUCE_TIME]
 
     if rank == 0:
 
