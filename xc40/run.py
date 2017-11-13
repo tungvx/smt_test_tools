@@ -46,12 +46,13 @@ with open(str(rank)+".csv", "w+", 1) as outfile:
             startTime = time.time()
             
             command = "ulimit -Sv " + str(config[MAX_MEMORY]) + "; ulimit -St " + str(config[TIMEOUT]) \
-                    + "; bash -c 'TIMEFORMAT=\"{\\\"CPU time user\\\": %3U, \\\"Wall time\\\": %3R, \\\"CPU time sys\\\": %3S}\"; time timeout " \
-                    + str(config[WALL_TIMEOUT]) + " " + config[TOOL_COMMAND] + " " +  config[FLAGS] + " " + tasks[idx] + "'"
+                    + "; bash -c 'TIMEFORMAT=\"{\\\"CPU time user\\\": %3U, \\\"Wall time\\\": %3R, \\\"CPU time sys\\\": %3S}\"; time " \
+                    + config[TOOL_COMMAND] + " " +  config[FLAGS] + " " + tasks[idx] + "'"
 
             # command = "ls"
 
             # print (command)
+            # exit()
 
             # print (command)
             try:
@@ -62,8 +63,10 @@ with open(str(rank)+".csv", "w+", 1) as outfile:
                 print (e)
                 pass   
 
+            proc.wait()
+
             try:    
-                iOut, iErr = proc.communicate(timeout=config[WALL_TIMEOUT])
+                iOut, iErr = proc.communicate()
                 errStr = iErr.strip()
             except TimeoutExpired:
                 result[RESULT] = "Timed out"
@@ -73,9 +76,13 @@ with open(str(rank)+".csv", "w+", 1) as outfile:
                 iErr = None
                 
                 try:
-                    # os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
-                    kill(proc.pid)
-                except Exception:
+                    os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+                    # iOut, iErr = proc.communicate(timeout=config[WALL_TIMEOUT])
+
+                    # print (iOut.strip())
+                    # kill(proc.pid)
+                except Exception as e:
+                    print (e)
                     pass
                     
                 # result[TIME] = time.time() - startTime
@@ -86,7 +93,7 @@ with open(str(rank)+".csv", "w+", 1) as outfile:
 
             endTime = time.time()
 
-            # print (errStr)
+            print (errStr)
 
             try:
                 m = re.search("\{\"CPU time user\": (.*), \"Wall time\": (.*), \"CPU time sys\": (.*)\}", errStr)
@@ -102,6 +109,11 @@ with open(str(rank)+".csv", "w+", 1) as outfile:
                 result[ICP_TIME] = re.search("icp_time: (\d+\.\d+)", errStr).group(1)
             except:
                 result[ICP_TIME] = "Failed"
+
+            try:
+                result[PARSING_TIME] = re.search("parsing_time: (\d+\.\d+)", errStr).group(1)
+            except:
+                result[PARSING_TIME] = "Failed"
 
             try:
                 result[TESTING_TIME] = re.search("testing_time: (\d+\.\d+)", errStr).group(1)
