@@ -63,24 +63,25 @@ with open(str(rank)+".csv", "w+", 1) as outfile:
                 print (e)
                 pass   
 
-            proc.wait()
+            # proc.wait()
+
+            errStr = None
+            iOut = None
+            iErr = None
 
             try:    
-                iOut, iErr = proc.communicate()
+                iOut, iErr = proc.communicate(timeout=config[WALL_TIMEOUT])
                 errStr = iErr.strip()
             except TimeoutExpired:
                 result[RESULT] = "Timed out"
-
-                errStr = None
-                iOut = None
-                iErr = None
                 
                 try:
-                    os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+                    # os.killpg(os.getpgid(proc.pid), signal.SIGXCPU)
+                    # os.kill(proc.pid, signal.SIGXCPU)
                     # iOut, iErr = proc.communicate(timeout=config[WALL_TIMEOUT])
 
                     # print (iOut.strip())
-                    # kill(proc.pid)
+                    kill(proc.pid)
                 except Exception as e:
                     print (e)
                     pass
@@ -94,6 +95,11 @@ with open(str(rank)+".csv", "w+", 1) as outfile:
             endTime = time.time()
 
             print (errStr)
+
+            try:
+                result[SOLVED_BY] = re.search("solved_by: (.*)", errStr).group(1)
+            except:
+                result[SOLVED_BY] = "Failed"
 
             try:
                 m = re.search("\{\"CPU time user\": (.*), \"Wall time\": (.*), \"CPU time sys\": (.*)\}", errStr)
