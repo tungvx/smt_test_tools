@@ -504,5 +504,5 @@ def run(tool, tool_exec, directory, timeout, resultFile, SOLVED_PROBLEM, max_mem
             sent_comm.wait()
 
 
-run("veriT", "/home/tungvx/ownCloud/higher_education/verit/veriT/veriT", "../test", 60, "veriT.csv", SMT2, 4000000, "--disable-banner --disable-print-success --reduce-path=/home/tungvx/ownCloud/higher_education/verit/veriT/reduce")        
+# run("veriT", "/home/tungvx/ownCloud/higher_education/verit/veriT/veriT", "../test", 60, "veriT.csv", SMT2, 4000000, "--disable-banner --disable-print-success --reduce-path=/home/tungvx/ownCloud/higher_education/verit/veriT/reduce")        
 # run("./veriT", "/work/tungvx/test", 30, "veriT.csv", SMT2, 40000, "--disable-banner --disable-print-success")     
