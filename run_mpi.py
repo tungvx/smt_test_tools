@@ -26,13 +26,17 @@ PROBLEM='Problem'
 TIME='time'
 CPU_TIME_SYS='CPU Sys'
 CPU_TIME_USER='CPU User'
-RESULT = 'status'
+RESULT = 'result'
+STATUS = 'status'
 ERROR = 'error'
 ICP_TIME = "ICP time"
+PARSING_TIME = "Parsing time"
 TESTING_TIME = "Testing time"
 DECOMP_TIME = "Decomp time"
 REDUCE_TIME = "Reduce time"
 IVT_TIME = "IVT time"
+SOLVED_BY = "Solved by"
+
 
 LOWER_BOUND = '(- 1000)'
 UPPER_BOUND = '1000'
@@ -127,7 +131,7 @@ def solve(tool, tool_exec, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memo
         f = open(os.path.join(root, filename))
         m = re.search('\(set-info :status (sat|unsat|unknown)\)', f.read())
         if m:
-            result[RESULT]=m.group(1)
+            result[STATUS]=m.group(1)
     except IOError:
         pass
     
@@ -137,14 +141,13 @@ def solve(tool, tool_exec, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memo
     #           +  flags + " " + os.path.join(root, filename)
 
     startTime = time.time()
-    wall_timeout = timeout
+    wall_timeout = timeout*1.2
     
 
-    import random
-    import sys
-    seed = random.randrange(0, 2147483647)
-
     if scrambling:
+        import random
+        import sys
+        seed = random.randrange(0, 2147483647)
         command = "rm -rf scrambler.smt2 && ./process " + full_filename \
                     + " " + str(seed) + " > scrambler.smt2 &&"
         new_smtfile = "scrambler.smt2"
@@ -153,7 +156,7 @@ def solve(tool, tool_exec, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memo
         new_smtfile = full_filename
 
     command += "ulimit -Sv " + str(max_memory) + "; ulimit -St " + str(timeout) \
-                    + "; bash -c 'TIMEFORMAT=\"{\\\"CPU time sys\\\": %3S, \\\"Wall time\\\": %3R, \\\"CPU time user\\\": %3U}\"; time timeout " + str(wall_timeout) + " " + tool_exec + " " \
+                    + "; bash -c 'TIMEFORMAT=\"{\\\"CPU time sys\\\": %3S, \\\"Wall time\\\": %3R, \\\"CPU time user\\\": %3U}\"; time " + tool_exec + " " \
                     +  flags + " " + new_smtfile + "'"
     
 
@@ -174,11 +177,13 @@ def solve(tool, tool_exec, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memo
     
     try:    
         iOut, iErr = proc.communicate(timeout=wall_timeout)
+        # iOut, iErr = proc.communicate()
         errStr = iErr.strip()
     except TimeoutExpired:
-        result[TOOL_RESULT] = "Timed out"
+        result[RESULT] = "Timed out"
         try:
             # os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+            # os.kill(proc.pid, signal.SIGXCPU)
             kill(proc.pid)
         except Exception:
             pass
@@ -188,6 +193,11 @@ def solve(tool, tool_exec, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memo
     # print (result.get(TOOL_RESULT))
 
     endTime = time.time()
+
+    try:
+        result[SOLVED_BY] = re.search("solved_by: (.*)", errStr).group(1)
+    except:
+        result[SOLVED_BY] = "Failed"
     
     # print ("Returned code:",proc.returncode)
 
@@ -206,18 +216,18 @@ def solve(tool, tool_exec, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memo
         result[CPU_TIME_SYS] = "Failed"
 
     try:
-        result[TOOL_RESULT] = iOut.strip()
+        result[RESULT] = iOut.strip()
     except Exception:
         pass
 
-    if not result[TOOL_RESULT]:
+    if not result[RESULT]:
         try:    
             if "SIGCHLD" in iErr:
-                result[TOOL_RESULT] = "SIGCHLD"
+                result[RESULT] = "SIGCHLD"
             elif "*** sfto_fctrf: factorization failed" in open("libreduce.log").read():
-                result[TOOL_RESULT] = "factorization"
+                result[RESULT] = "factorization"
         except Exception:
-            result[TOOL_RESULT] = ""
+            result[RESULT] = ""
     
     if log_error:
         try:
@@ -229,6 +239,11 @@ def solve(tool, tool_exec, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memo
         result[ICP_TIME] = re.search("icp_time: (\d+\.\d+)", errStr).group(1)
     except:
         result[ICP_TIME] = "Failed"
+
+    try:
+        result[PARSING_TIME] = re.search("parsing_time: (\d+\.\d+)", errStr).group(1)
+    except:
+        result[PARSING_TIME] = "Failed"
 
     try:
         result[TESTING_TIME] = re.search("testing_time: (\d+\.\d+)", errStr).group(1)
@@ -263,9 +278,7 @@ def run(tool, tool_exec, directory, timeout, resultFile, SOLVED_PROBLEM, max_mem
     # we need the number of processes to be greater than 1
     assert(size > 1)
 
-    TOOL_RESULT = tool + " result"
-
-    HEADERS = [PROBLEM, RESULT, TOOL_RESULT, TIME, CPU_TIME_SYS, CPU_TIME_USER, ICP_TIME, TESTING_TIME, IVT_TIME, DECOMP_TIME, REDUCE_TIME]
+    HEADERS = [PROBLEM, STATUS, RESULT, SOLVED_BY, TIME, CPU_TIME_USER, CPU_TIME_SYS, PARSING_TIME, ICP_TIME, TESTING_TIME, IVT_TIME, DECOMP_TIME, REDUCE_TIME]
 
     if rank == 0:
 
@@ -422,7 +435,7 @@ def run(tool, tool_exec, directory, timeout, resultFile, SOLVED_PROBLEM, max_mem
                 if smt2Filename=="exit" and root == "exit":
                     break
 
-                result = solve(tool, tool_exec, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, TOOL_RESULT, flags)
+                result = solve(tool, tool_exec, smt2Filename, SOLVED_PROBLEM, root, timeout, max_memory, RESULT, flags)
                 for key in result:
                     result[key] = str(result[key])
 
@@ -491,5 +504,5 @@ def run(tool, tool_exec, directory, timeout, resultFile, SOLVED_PROBLEM, max_mem
             sent_comm.wait()
 
 
-# run("veriT", "/home/tungvx/ownCloud/higher_education/verit/veriT/veriT", "../test", 30, "veriT.csv", SMT2, 4000000, "--disable-banner --disable-print-success --reduce-path=/home/tungvx/ownCloud/higher_education/verit/veriT/extern/reduce/bin/redpsl")        
+run("veriT", "/home/tungvx/ownCloud/higher_education/verit/veriT/veriT", "../test", 60, "veriT.csv", SMT2, 4000000, "--disable-banner --disable-print-success --reduce-path=/home/tungvx/ownCloud/higher_education/verit/veriT/reduce")        
 # run("./veriT", "/work/tungvx/test", 30, "veriT.csv", SMT2, 40000, "--disable-banner --disable-print-success")     
