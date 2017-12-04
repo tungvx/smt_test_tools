@@ -409,7 +409,7 @@ def run(tool, tool_exec, directory, timeout, resultFile, SOLVED_PROBLEM, max_mem
                 pass
 
             # copy files into sub-dir
-            shutil.copy2(tool, sub_dir)
+            shutil.copy2(tool_exec, sub_dir)
             shutil.copy2("cvc4", sub_dir)
             if scrambling:
                 shutil.copy2("/work/tungvx/scrambler/process", sub_dir)
